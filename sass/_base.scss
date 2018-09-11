@@ -1,0 +1,149 @@
+@import 'configuration';
+
+body {
+  background-color: $bg-color1;
+  color: $fg-color-normal;
+  font-family: sans-serif;
+  -webkit-tap-highlight-color: rgba(0, 0, 0, 0);
+}
+
+a {
+  cursor: pointer;
+  text-decoration: none;
+}
+
+a,
+a:visited,
+a:active {
+  color: $fg-color-normal;
+}
+
+::selection {
+  background: $fg-color-normal;
+}
+
+svg {
+  path {
+    fill: $fg-color-normal;
+    stroke: $fg-color-normal;
+  }
+}
+
+.header {
+  background-color: $bg-color3;
+  box-shadow: 0 5px 5px 0 $shadow-color;
+  font-size: 1.3em;
+  left: 0;
+  min-height: $header-height;
+  right: 0;
+  top: 0;
+  width: 100%;
+  z-index: 5;
+
+  .title,
+  .menu .entry {
+    padding: $header-height/3.5 $header-height/3.5 0;
+  }
+
+  .title {
+    padding-right: 30px;
+  }
+
+  @media (max-width: $small-screen-max-width) {
+    .menu {
+      min-width: 100%;
+    }
+  }
+
+  .menu {
+    display: flex;
+    position: relative;
+
+    .entry {
+      cursor: pointer;
+      flex-grow: 1;
+      height: $header-height;
+      max-width: 300px;
+      text-align: center;
+    }
+
+    .entry:not(.selected) {
+      opacity: .6;
+    }
+
+    .entry:hover,
+    .entry.active {
+      opacity: 1;
+    }
+
+    .menu-border {
+      $border-height: 3px;
+      background-color: $fg-color-normal;
+      height: $border-height;
+      left: 0;
+      position: absolute;
+      top: $header-height - $border-height;
+    }
+  }
+
+  .icons {
+    position: absolute;
+    right: $header-height/3.5;
+    top: $header-height/3.5;
+
+    .icon {
+      opacity: .6;
+    }
+
+    .icon:hover {
+      opacity: 1;
+    }
+  }
+}
+
+.content {
+  .page {
+    height: auto;
+    padding: $content-spacing;
+  }
+}
+
+.cards {
+  display: flex;
+  flex-flow: row wrap;
+  margin-left: -$content-spacing;
+  margin-top: -$content-spacing;
+
+  .card {
+    background-color: $bg-color2;
+    box-shadow: -5px 5px 5px 0 $shadow-color;
+    flex-grow: 1;
+    margin-left: $content-spacing;
+    margin-top: $content-spacing;
+    min-height: 250px;
+    padding: $content-spacing;
+    width: 440px;
+
+    .tag {
+      float: right;
+      margin-right: 10px;
+      margin-top: 3px;
+    }
+
+    &.full {
+      flex-grow: 2;
+      width: 100%;
+    }
+
+    a {
+      color: $fg-color-link;
+      text-decoration: underline;
+    }
+
+    a:visited,
+    a:active,
+    a:hover {
+      color: $fg-color-normal;
+    }
+  }
+}

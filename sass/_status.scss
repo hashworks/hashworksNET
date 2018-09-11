@@ -1,0 +1,48 @@
+.status-svg {
+  // "Loading graph…" image
+  background: url('data:image/svg+xml;charset=UTF-8,<svg width="200" height="100" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"><text y="20" fill="white" font-size="24" font-family="sans-serif">Loading graph…</text></svg>') no-repeat center;
+
+  @media screen and (max-width: 200px) {
+    background: none;
+  }
+
+  div {
+    background: url('/status.svg?w=1244&h=700') no-repeat center;
+    background-size: contain;
+    height: 700px;
+
+    @media screen and (max-width: 1600px) {
+      background-image: url('/status.svg?w=924&h=520');
+      height: 520px;
+    }
+
+    @media screen and (max-width: 1366px) {
+      background-image: url('/status.svg?w=689&h=388');
+      height: 388px;
+    }
+
+    @media screen and (max-width: 720px) {
+      background-image: url('/status.svg?w=600&h=337');
+      height: 337px;
+    }
+
+    @media screen and (max-width: 600px) {
+      background-image: url('/status.svg?w=400&h=225');
+      height: 225px;
+    }
+
+    @media screen and (max-width: 400px) {
+      background-image: url('/status.svg?w=200&h=112');
+      height: 112px;
+    }
+
+    @media screen and (max-width: 200px) {
+      background: none;
+      height: auto;
+
+      &::after {
+        content: 'Please use a wider screen.';
+      }
+    }
+  }
+}
