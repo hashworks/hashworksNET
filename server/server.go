@@ -25,7 +25,7 @@ type Server struct {
 
 func NewServer() Server {
 	var err error
-	//gin.SetMode(gin.ReleaseMode)
+	gin.SetMode(gin.ReleaseMode)
 
 	s := Server{
 		Router: gin.Default(),
