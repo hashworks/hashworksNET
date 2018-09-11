@@ -37,6 +37,10 @@ func main() {
 		fmt.Println("Published under the GNU General Public License v3.0.")
 	default:
 		s := server.NewServer()
-		s.Router.Run(fmt.Sprintf("%s:%d", address, port))
+		err := s.Router.Run(fmt.Sprintf("%s:%d", address, port))
+		if err != nil {
+			fmt.Printf("Failed to start server: %s\n", err)
+			os.Exit(1)
+		}
 	}
 }
