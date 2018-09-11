@@ -2,6 +2,7 @@ package server
 
 import (
 	"encoding/json"
+	"errors"
 	"github.com/gin-gonic/gin"
 	"github.com/influxdata/influxdb/client/v2"
 	"github.com/wcharczuk/go-chart"
@@ -12,8 +13,6 @@ import (
 )
 
 func (s Server) statusSVG(c *gin.Context) {
-	c.Header("Cache-Control", "max-age=600")
-
 	height, err := strconv.ParseInt(c.DefaultQuery("h", "450"), 10, 16)
 	if err != nil || height <= 0 {
 		c.AbortWithStatus(http.StatusBadRequest)
@@ -36,7 +35,7 @@ func (s Server) statusSVG(c *gin.Context) {
 	}
 
 	q := client.Query{
-		Command:   "SELECT mean(value) FROM bpm WHERE host != 'Justin Kromlinger' AND time > now() - 12h GROUP BY time(5m)",
+		Command:   "SELECT mean(value) FROM bpm WHERE host = 'Justin Kromlinger' AND time > now() - 12h GROUP BY time(5m)",
 		Database:  "body",
 		Precision: "s",
 	}
@@ -45,6 +44,11 @@ func (s Server) statusSVG(c *gin.Context) {
 
 	if err != nil {
 		recoveryHandler(c, err)
+		return
+	}
+
+	if len(resp.Results) == 0 || len(resp.Results[0].Series) == 0 || len(resp.Results[0].Series[0].Values) == 0 {
+		recoveryHandler(c, errors.New("InfluxDB returned an empty result"))
 		return
 	}
 
@@ -60,7 +64,7 @@ func (s Server) statusSVG(c *gin.Context) {
 	}
 
 	for i := 0; i < len(resp.Results[0].Series[0].Values); i++ {
-		if resp.Results[0].Series[0].Values[i][0] == nil || resp.Results[0].Series[0].Values[i][1] == nil {
+		if len(resp.Results[0].Series[0].Values[i]) == 0 || resp.Results[0].Series[0].Values[i][0] == nil || resp.Results[0].Series[0].Values[i][1] == nil {
 			continue
 		}
 
@@ -122,6 +126,7 @@ func (s Server) statusSVG(c *gin.Context) {
 		return
 	}
 
+	c.Header("Cache-Control", "max-age=600")
 	c.Status(200)
 }
 
