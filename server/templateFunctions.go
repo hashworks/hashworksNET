@@ -7,7 +7,7 @@ import (
 func (s Server) templateFunctionMap() template.FuncMap {
 	return template.FuncMap{
 		"css": func() template.CSS {
-			bytes, err := cssMainCssBytes()
+			bytes, err := Asset("css/main.css")
 			if err != nil {
 				panic(err)
 			}
