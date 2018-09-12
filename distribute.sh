@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 name=hashworksNET
-export CGO_ENABLED=1
+export CGO_ENABLED=0
 
 platforms=(
     linux-amd64 windows-amd64
