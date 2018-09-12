@@ -3,6 +3,7 @@ package main
 import (
 	"flag"
 	"fmt"
+	"github.com/gin-gonic/gin"
 	"github.com/hashworks/hashworksNET/server"
 	"os"
 )
@@ -12,9 +13,11 @@ var (
 	VERSION      string = "unknown"
 	BUILD_COMMIT string = "unknown"
 	BUILD_DATE   string = "unknown"
+	GIN_MODE     string = gin.DebugMode
 	versionFlag  bool
 	address      string
 	port         int
+	debug        bool
 )
 
 func main() {
@@ -23,6 +26,7 @@ func main() {
 	flagSet.BoolVar(&versionFlag, "version", false, "Displays the version and license information.")
 	flagSet.StringVar(&address, "address", "", "The address to listen on.")
 	flagSet.IntVar(&port, "port", 65431, "The port to listen on.")
+	flagSet.BoolVar(&debug, "debug", false, "Debug mode.")
 
 	flagSet.Parse(os.Args[1:])
 
@@ -36,7 +40,7 @@ func main() {
 		fmt.Println()
 		fmt.Println("Published under the GNU General Public License v3.0.")
 	default:
-		s := server.NewServer()
+		s := server.NewServer(GIN_MODE, debug)
 		err := s.Router.Run(fmt.Sprintf("%s:%d", address, port))
 		if err != nil {
 			fmt.Printf("Failed to start server: %s\n", err)

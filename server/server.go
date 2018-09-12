@@ -21,15 +21,17 @@ import (
 type Server struct {
 	Router *gin.Engine
 	Store  *persistence.InMemoryStore
+	Debug  bool
 }
 
-func NewServer() Server {
+func NewServer(ginMode string, debug bool) Server {
 	var err error
-	gin.SetMode(gin.ReleaseMode)
+	gin.SetMode(ginMode)
 
 	s := Server{
 		Router: gin.Default(),
 		Store:  persistence.NewInMemoryStore(time.Minute),
+		Debug:  debug,
 	}
 
 	s.Router.Use(nice.Recovery(recoveryHandler))
@@ -55,7 +57,9 @@ func NewServer() Server {
 			panic(err)
 		}
 		multiT.Add(basename, tmpl)
-		log.Printf("Loaded templates/%s as %s\n", templateName, basename)
+		if s.Debug {
+			log.Printf("Loaded templates/%s as %s\n", templateName, basename)
+		}
 	}
 	// multitemplate is our new HTML renderer
 	s.Router.HTMLRender = multiT

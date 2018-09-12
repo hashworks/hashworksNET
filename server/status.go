@@ -7,6 +7,7 @@ import (
 	"github.com/influxdata/influxdb/client/v2"
 	"github.com/wcharczuk/go-chart"
 	"github.com/wcharczuk/go-chart/drawing"
+	"log"
 	"net/http"
 	"time"
 )
@@ -70,6 +71,10 @@ func (s Server) statusSVG(c *gin.Context, width, height int) {
 	if len(resp.Results) == 0 || len(resp.Results[0].Series) == 0 || len(resp.Results[0].Series[0].Values) == 0 {
 		recoveryHandler(c, errors.New("InfluxDB returned an empty result"))
 		return
+	}
+
+	if s.Debug {
+		log.Println(resp.Results[0].Series[0].Values)
 	}
 
 	timeSeries := chart.TimeSeries{

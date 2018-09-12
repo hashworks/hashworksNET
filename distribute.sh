@@ -73,7 +73,7 @@ for plat in "${platforms[@]}"; do
     fi
 
     echo Building "$plat" with "$CC" ...
-    go build -ldflags '-extld='"$CC"' -X main.VERSION='"$version"' -X main.BUILD_COMMIT='"$commit"' -X main.BUILD_DATE='"$date" \
+    go build -ldflags '-extld='"$CC"' -X main.VERSION='"$version"' -X main.BUILD_COMMIT='"$commit"' -X main.BUILD_DATE='"$date"' -X main.GIN_MODE=release' \
     -o "$tmpFile" "$DIR"/*.go
 
     if [ "$?" != 0 ]; then
