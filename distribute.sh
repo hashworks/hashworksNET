@@ -4,9 +4,9 @@ name=hashworksNET
 export CGO_ENABLED=0
 
 platforms=(
-    linux-amd64 windows-amd64
-    linux-386 windows-386
-    linux-armv5 linux-armv6 linux-armv7
+    linux-amd64 # windows-amd64
+    #linux-386 windows-386
+    #linux-armv5 linux-armv6 linux-armv7
     #linux-armv8
 )
 
