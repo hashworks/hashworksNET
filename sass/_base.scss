@@ -98,6 +98,10 @@ svg {
     .icon:hover {
       opacity: 1;
     }
+
+    @media screen and (max-width: 200px) {
+      display: none;
+    }
   }
 }
 
