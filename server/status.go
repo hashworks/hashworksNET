@@ -8,22 +8,42 @@ import (
 	"github.com/wcharczuk/go-chart"
 	"github.com/wcharczuk/go-chart/drawing"
 	"net/http"
-	"strconv"
 	"time"
 )
 
-func (s Server) statusSVG(c *gin.Context) {
-	height, err := strconv.ParseInt(c.DefaultQuery("h", "450"), 10, 16)
-	if err != nil || height <= 0 {
-		c.AbortWithStatus(http.StatusBadRequest)
-		return
-	}
-	width, err := strconv.ParseInt(c.DefaultQuery("w", "800"), 10, 16)
-	if err != nil || width <= 0 {
-		c.AbortWithStatus(http.StatusBadRequest)
-		return
-	}
+func (s Server) statusSVG_1940x1060(c *gin.Context) {
+	s.statusSVG(c, 1940, 1060)
+}
 
+func (s Server) statusSVG_1700x700(c *gin.Context) {
+	s.statusSVG(c, 1700, 700)
+}
+
+func (s Server) statusSVG_1380x520(c *gin.Context) {
+	s.statusSVG(c, 1380, 520)
+}
+
+func (s Server) statusSVG_1145x385(c *gin.Context) {
+	s.statusSVG(c, 1145, 385)
+}
+
+func (s Server) statusSVG_780x385(c *gin.Context) {
+	s.statusSVG(c, 780, 385)
+}
+
+func (s Server) statusSVG_500x335(c *gin.Context) {
+	s.statusSVG(c, 500, 335)
+}
+
+func (s Server) statusSVG_400x225(c *gin.Context) {
+	s.statusSVG(c, 400, 225)
+}
+
+func (s Server) statusSVG_200x115(c *gin.Context) {
+	s.statusSVG(c, 200, 115)
+}
+
+func (s Server) statusSVG(c *gin.Context, width, height int) {
 	httpClient, err := client.NewHTTPClient(client.HTTPConfig{
 		Addr: "http://127.0.0.1:8086",
 	})

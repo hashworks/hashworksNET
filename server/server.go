@@ -17,7 +17,7 @@ import (
 	"net/http"
 )
 
-// I'm using this struct to pass stuff around. Like database connnection
+// I'm using this struct to pass stuff around. Like database connections etc
 type Server struct {
 	Router *gin.Engine
 	Store  *persistence.InMemoryStore
@@ -73,7 +73,14 @@ func NewServer() Server {
 
 	s.Router.GET("/", cache.CachePage(s.Store, 10*time.Minute, s.index))
 	s.Router.GET("/status", cache.CachePage(s.Store, 10*time.Minute, s.status))
-	s.Router.GET("/status.svg", cache.CachePage(s.Store, 10*time.Minute, s.statusSVG))
+	s.Router.GET("/status-1940x1060.svg", cache.CachePage(s.Store, 10*time.Minute, s.statusSVG_1940x1060))
+	s.Router.GET("/status-1700x700.svg", cache.CachePage(s.Store, 10*time.Minute, s.statusSVG_1700x700))
+	s.Router.GET("/status-1380x520.svg", cache.CachePage(s.Store, 10*time.Minute, s.statusSVG_1380x520))
+	s.Router.GET("/status-1145x385.svg", cache.CachePage(s.Store, 10*time.Minute, s.statusSVG_1145x385))
+	s.Router.GET("/status-780x385.svg", cache.CachePage(s.Store, 10*time.Minute, s.statusSVG_780x385))
+	s.Router.GET("/status-500x335.svg", cache.CachePage(s.Store, 10*time.Minute, s.statusSVG_500x335))
+	s.Router.GET("/status-400x225.svg", cache.CachePage(s.Store, 10*time.Minute, s.statusSVG_400x225))
+	s.Router.GET("/status-200x115.svg", cache.CachePage(s.Store, 10*time.Minute, s.statusSVG_200x115))
 
 	s.Router.NoRoute(cache.CachePage(s.Store, 10*time.Minute, func(c *gin.Context) {
 		c.Header("Cache-Control", "max-age=600")

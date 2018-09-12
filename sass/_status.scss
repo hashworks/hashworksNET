@@ -7,32 +7,42 @@
   }
 
   div {
-    background: url('/status.svg?w=1244&h=700') no-repeat center;
+    background: url('/status-1940x1060.svg') no-repeat center;
     background-size: contain;
-    height: 700px;
+    height: 1060px;
 
-    @media screen and (max-width: 1600px) {
-      background-image: url('/status.svg?w=924&h=520');
+    @media screen and (max-width: 2000px) {
+      background-image: url('/status-1700x700.svg');
+      height: 700px;
+    }
+
+    @media screen and (max-width: 1700px) {
+      background-image: url('/status-1380x520.svg');
       height: 520px;
     }
 
-    @media screen and (max-width: 1366px) {
-      background-image: url('/status.svg?w=689&h=388');
+    @media screen and (max-width: 1400px) {
+      background-image: url('/status-1145x385.svg');
       height: 388px;
     }
 
-    @media screen and (max-width: 720px) {
-      background-image: url('/status.svg?w=600&h=337');
+    @media screen and (max-width: 1000px) {
+      background-image: url('/status-780x385.svg');
+      height: 388px;
+    }
+
+    @media screen and (max-width: 800px) {
+      background-image: url('/status-500x335.svg');
       height: 337px;
     }
 
     @media screen and (max-width: 600px) {
-      background-image: url('/status.svg?w=400&h=225');
+      background-image: url('/status-400x225.svg');
       height: 225px;
     }
 
     @media screen and (max-width: 400px) {
-      background-image: url('/status.svg?w=200&h=112');
+      background-image: url('/status-200x115.svg');
       height: 112px;
     }
 
