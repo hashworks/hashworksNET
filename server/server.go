@@ -35,6 +35,7 @@ func NewServer(ginMode string, debug bool) Server {
 	}
 
 	s.Router.Use(nice.Recovery(recoveryHandler))
+	s.Router.Use(headersByRequestURI())
 
 	// Load template file names from Asset
 	templateNames, err := AssetDir("templates")
@@ -99,4 +100,17 @@ func NewServer(ginMode string, debug bool) Server {
 func recoveryHandler(c *gin.Context, err interface{}) {
 	log.Printf("Error: %s", err)
 	c.String(http.StatusInternalServerError, "There was an internal server error, please report this to mail@hashworks.net.")
+}
+
+func headersByRequestURI() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		if strings.HasPrefix(c.Request.RequestURI, "/static/") {
+			c.Header("Cache-Control", "max-age=86400")
+			c.Header("Content-Description", "File Transfer")
+			c.Header("Content-Type", "application/octet-stream")
+			c.Header("Content-Transfer-Encoding", "binary")
+		} else if strings.HasPrefix(c.Request.RequestURI, "/img/") {
+			c.Header("Cache-Control", "max-age=86400")
+		}
+	}
 }
