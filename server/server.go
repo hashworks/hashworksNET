@@ -105,12 +105,12 @@ func recoveryHandler(c *gin.Context, err interface{}) {
 func headersByRequestURI() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		if strings.HasPrefix(c.Request.RequestURI, "/static/") {
-			c.Header("Cache-Control", "max-age=86400")
+			c.Header("Cache-Control", "max-age=604800")
 			c.Header("Content-Description", "File Transfer")
 			c.Header("Content-Type", "application/octet-stream")
 			c.Header("Content-Transfer-Encoding", "binary")
 		} else if strings.HasPrefix(c.Request.RequestURI, "/img/") {
-			c.Header("Cache-Control", "max-age=86400")
+			c.Header("Cache-Control", "max-age=31540000")
 		}
 	}
 }
