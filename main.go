@@ -7,6 +7,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/hashworks/hashworksNET/server"
 	"os"
+	"path"
 )
 
 var (
@@ -18,6 +19,9 @@ var (
 	versionFlag  bool
 	address      string
 	port         int
+	https        bool
+	domain       string
+	cacheDir     string
 	debug        bool
 )
 
@@ -26,8 +30,11 @@ func main() {
 
 	flagSet.BoolVar(&versionFlag, "version", false, "Displays the version and license information.")
 	flagSet.StringVar(&address, "address", "", "The address to listen on.")
-	flagSet.IntVar(&port, "port", 65431, "The port to listen on.")
-	flagSet.BoolVar(&debug, "debug", false, "Debug mode.")
+	flagSet.IntVar(&port, "port", 65432, "The port to listen on.")
+	flagSet.BoolVar(&https, "https", false, "Provide HTTPS. Requires a domain.")
+	flagSet.StringVar(&domain, "domain", "hashworks.net", "The domain required by HTTPS.")
+	flagSet.StringVar(&cacheDir, "cacheDir", getDefaultCacheDir(), "Cache directory, f.e. for certificates.")
+	flagSet.BoolVar(&debug, "debug", false, "debug mode.")
 
 	flagSet.Parse(os.Args[1:])
 
@@ -41,11 +48,29 @@ func main() {
 		fmt.Println()
 		fmt.Println("Published under the GNU General Public License v3.0.")
 	default:
-		s := server.NewServer(GIN_MODE, debug)
-		err := s.Router.Run(fmt.Sprintf("%s:%d", address, port))
-		if err != nil {
-			fmt.Printf("Failed to start server: %s\n", err)
-			os.Exit(1)
+		s := server.NewServer(GIN_MODE, https, domain, cacheDir, debug)
+		if https {
+			if domain != "" {
+				if err := s.RunTLS(fmt.Sprintf("%s:%d", address, port)); err != nil {
+					fmt.Printf("Failed to start the https server: %s\n", err)
+					os.Exit(1)
+				}
+			} else {
+				fmt.Println("Error: TLS requires a domain.")
+				os.Exit(2)
+			}
+		} else {
+			if err := s.Router.Run(fmt.Sprintf("%s:%d", address, port)); err != nil {
+				fmt.Printf("Error: Failed to start the http server: %s\n", err)
+				os.Exit(1)
+			}
 		}
 	}
+}
+
+func getDefaultCacheDir() string {
+	if userCacheDir, err := os.UserCacheDir(); err == nil {
+		return path.Join(userCacheDir, "hashworksNET")
+	}
+	return "cache"
 }

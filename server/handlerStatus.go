@@ -12,39 +12,39 @@ import (
 	"time"
 )
 
-func (s Server) statusSVG_1940x1060(c *gin.Context) {
-	s.statusSVG(c, 1940, 1060)
+func (s Server) handlerStatusSVG1940x1060(c *gin.Context) {
+	s.handlerStatusSVG(c, 1940, 1060)
 }
 
-func (s Server) statusSVG_1700x700(c *gin.Context) {
-	s.statusSVG(c, 1700, 700)
+func (s Server) handlerStatusSVG1700x700(c *gin.Context) {
+	s.handlerStatusSVG(c, 1700, 700)
 }
 
-func (s Server) statusSVG_1380x520(c *gin.Context) {
-	s.statusSVG(c, 1380, 520)
+func (s Server) handlerStatusSVG1380x520(c *gin.Context) {
+	s.handlerStatusSVG(c, 1380, 520)
 }
 
-func (s Server) statusSVG_1145x385(c *gin.Context) {
-	s.statusSVG(c, 1145, 385)
+func (s Server) handlerStatusSVG1145x385(c *gin.Context) {
+	s.handlerStatusSVG(c, 1145, 385)
 }
 
-func (s Server) statusSVG_780x385(c *gin.Context) {
-	s.statusSVG(c, 780, 385)
+func (s Server) handlerStatusSVG780x385(c *gin.Context) {
+	s.handlerStatusSVG(c, 780, 385)
 }
 
-func (s Server) statusSVG_500x335(c *gin.Context) {
-	s.statusSVG(c, 500, 335)
+func (s Server) handlerStatusSVG500x335(c *gin.Context) {
+	s.handlerStatusSVG(c, 500, 335)
 }
 
-func (s Server) statusSVG_400x225(c *gin.Context) {
-	s.statusSVG(c, 400, 225)
+func (s Server) handlerStatusSVG400x225(c *gin.Context) {
+	s.handlerStatusSVG(c, 400, 225)
 }
 
-func (s Server) statusSVG_200x115(c *gin.Context) {
-	s.statusSVG(c, 200, 115)
+func (s Server) handlerStatusSVG200x115(c *gin.Context) {
+	s.handlerStatusSVG(c, 200, 115)
 }
 
-func (s Server) statusSVG(c *gin.Context, width, height int) {
+func (s Server) handlerStatusSVG(c *gin.Context, width, height int) {
 	httpClient, err := client.NewHTTPClient(client.HTTPConfig{
 		Addr: "http://127.0.0.1:8086",
 	})
@@ -73,7 +73,7 @@ func (s Server) statusSVG(c *gin.Context, width, height int) {
 		return
 	}
 
-	if s.Debug {
+	if s.debug {
 		log.Println(resp.Results[0].Series[0].Values)
 	}
 
@@ -145,17 +145,18 @@ func (s Server) statusSVG(c *gin.Context, width, height int) {
 	}
 
 	c.Header("Content-Type", "image/svg+xml")
+	c.Header("Cache-Control", "max-age=600")
+	c.Header("Content-Security-Policy", s.getCSP(false)) // Our SVGs require inline CSS
 
 	if err := graph.Render(chart.SVG, c.Writer); err != nil {
 		recoveryHandler(c, err)
 		return
 	}
 
-	c.Header("Cache-Control", "max-age=600")
 	c.Status(200)
 }
 
-func (s Server) status(c *gin.Context) {
+func (s Server) handlerStatus(c *gin.Context) {
 	c.Header("Cache-Control", "max-age=600")
 	c.HTML(http.StatusOK, "status", gin.H{
 		"Title":     "status",
