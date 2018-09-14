@@ -12,33 +12,19 @@ SASS_FLAGS_DEBUG=-t nested -l
 
 build: bin/hashworksNET
 
-generate: $(BINARY_PRE)
-
 run: build
 	bin/hashworksNET
 
 distribute: build
 	./distribute.sh
 
+clean:
+	rm -Rf ./bin ./css ./server/bindata.go
+
 debug: SASS_FLAGS=$(SASS_FLAGS_DEBUG)
 debug: BINDATA_FLAGS=$(BINDATA_FLAGS_DEBUG)
 debug: bin/hashworksNET
 	bin/hashworksNET --debug
-
-dependencies:
-	go get -u github.com/gin-gonic/gin
-	go get -u github.com/ekyoung/gin-nice-recovery
-	go get -u github.com/gin-contrib/multitemplate
-	go get -u github.com/gin-contrib/cache
-	gp get -u github.com/gin-gonic/autotls
-	go get -u github.com/unrolled/secure
-	go get -u github.com/jteeuwen/go-bindata/...
-	go get -u github.com/elazarl/go-bindata-assetfs/...
-	go get -u github.com/mattn/go-isatty
-	go get -u github.com/wcharczuk/go-chart
-
-clean:
-	rm -Rf ./bin ./css ./server/bindata.go
 
 
 debug-css: SASS_FLAGS=$(SASS_FLAGS_DEBUG)
