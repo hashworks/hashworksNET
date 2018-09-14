@@ -32,7 +32,7 @@ func main() {
 	flagSet.StringVar(&address, "address", "", "The address to listen on.")
 	flagSet.IntVar(&port, "port", 65432, "The port to listen on.")
 	flagSet.BoolVar(&https, "https", false, "Provide HTTPS. Requires a domain.")
-	flagSet.StringVar(&domain, "domain", "hashworks.net", "The domain required by HTTPS.")
+	flagSet.StringVar(&domain, "domain", "", "The domain required by HTTPS.")
 	flagSet.StringVar(&cacheDir, "cacheDir", getDefaultCacheDir(), "Cache directory, f.e. for certificates.")
 	flagSet.BoolVar(&debug, "debug", false, "debug mode.")
 
