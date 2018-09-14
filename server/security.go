@@ -12,6 +12,7 @@ import (
 
 func (s Server) RunTLS(address string) error {
 	m := autocert.Manager{
+		Email:      "mail@hashworks.net",
 		Prompt:     autocert.AcceptTOS,
 		HostPolicy: autocert.HostWhitelist(s.domain),
 		Cache:      autocert.DirCache(s.cacheDir),
