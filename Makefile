@@ -10,8 +10,9 @@ SASS_SOURCE=sass/main.scss
 SASS_FLAGS=-t compressed
 SASS_FLAGS_DEBUG=-t nested -l
 
-
 build: bin/hashworksNET
+
+generate: $(BINARY_PRE)
 
 run: build
 	bin/hashworksNET
@@ -21,8 +22,8 @@ distribute: build
 
 debug: SASS_FLAGS=$(SASS_FLAGS_DEBUG)
 debug: BINDATA_FLAGS=$(BINDATA_FLAGS_DEBUG)
-debug: run
-
+debug: bin/hashworksNET
+	bin/hashworksNET --debug
 
 dependencies:
 	go get -u github.com/gin-gonic/gin
