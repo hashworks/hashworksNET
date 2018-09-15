@@ -19,7 +19,8 @@ var (
 	versionFlag  bool
 	address      string
 	port         int
-	https        bool
+	tls          bool
+	tlsProxy     bool
 	domain       string
 	cacheDir     string
 	debug        bool
@@ -31,8 +32,9 @@ func main() {
 	flagSet.BoolVar(&versionFlag, "version", false, "Displays the version and license information.")
 	flagSet.StringVar(&address, "address", "", "The address to listen on.")
 	flagSet.IntVar(&port, "port", 65432, "The port to listen on.")
-	flagSet.BoolVar(&https, "https", false, "Provide HTTPS. Requires a domain.")
-	flagSet.StringVar(&domain, "domain", "", "The domain required by HTTPS.")
+	flagSet.BoolVar(&tls, "tls", false, "Provide HTTP with TLS. Requires a domain.")
+	flagSet.BoolVar(&tlsProxy, "tlsProxy", false, "Set this if the service is behind a TLS proxy.")
+	flagSet.StringVar(&domain, "domain", "", "The domain the service is reachable at..")
 	flagSet.StringVar(&cacheDir, "cacheDir", getDefaultCacheDir(), "Cache directory, f.e. for certificates.")
 	flagSet.BoolVar(&debug, "debug", false, "debug mode.")
 
@@ -48,11 +50,11 @@ func main() {
 		fmt.Println()
 		fmt.Println("Published under the GNU General Public License v3.0.")
 	default:
-		s := server.NewServer(GIN_MODE, https, domain, cacheDir, debug)
-		if https {
+		s := server.NewServer(GIN_MODE, tls, tlsProxy, domain, cacheDir, debug)
+		if tls {
 			if domain != "" {
 				if err := s.RunTLS(fmt.Sprintf("%s:%d", address, port)); err != nil {
-					fmt.Printf("Failed to start the https server: %s\n", err)
+					fmt.Printf("Failed to start the tls server: %s\n", err)
 					os.Exit(1)
 				}
 			} else {

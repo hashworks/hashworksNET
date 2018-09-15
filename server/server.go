@@ -24,12 +24,13 @@ type Server struct {
 	css       template.CSS
 	cssSha256 string
 	tls       bool
+	tlsProxy  bool
 	domain    string
 	cacheDir  string
 	debug     bool
 }
 
-func NewServer(ginMode string, tls bool, domain, cacheDir string, debug bool) Server {
+func NewServer(ginMode string, tls, tlsProxy bool, domain, cacheDir string, debug bool) Server {
 	gin.SetMode(ginMode)
 
 	cssBytes := MustAsset("css/main.css")
@@ -41,6 +42,7 @@ func NewServer(ginMode string, tls bool, domain, cacheDir string, debug bool) Se
 		css:       template.CSS(cssBytes),
 		cssSha256: base64.StdEncoding.EncodeToString(cssSha256[:]),
 		tls:       tls,
+		tlsProxy:  tlsProxy,
 		domain:    domain,
 		cacheDir:  cacheDir,
 		debug:     debug,

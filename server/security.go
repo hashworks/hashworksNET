@@ -62,11 +62,11 @@ func secureHandler(secureMiddleware *secure.Secure) gin.HandlerFunc {
 
 func (s Server) getSecureOptions() secure.Options {
 	options := secure.Options{
-		SSLRedirect:          s.tls,
+		SSLRedirect:          s.tls || s.tlsProxy,
 		STSSeconds:           315360000,
 		STSIncludeSubdomains: true,
 		STSPreload:           true,
-		ForceSTSHeader:       false,
+		ForceSTSHeader:       s.tlsProxy,
 		FrameDeny:            true,
 		ContentTypeNosniff:   true,
 		BrowserXssFilter:     true,
@@ -89,7 +89,9 @@ func (s Server) getSecureOptions() secure.Options {
 
 	if s.domain != "" {
 		options.AllowedHosts = []string{s.domain}
-		options.SSLHost = s.domain
+		if s.tls || s.tlsProxy {
+			options.SSLHost = s.domain
+		}
 	}
 
 	return options
@@ -101,7 +103,7 @@ func (s Server) getCSP(safeCSS bool) string {
 		styleSrc = fmt.Sprintf("'sha256-%s'", s.cssSha256)
 	}
 	upgradeInSecureRequests := ""
-	if s.tls {
+	if s.tls || s.tlsProxy {
 		upgradeInSecureRequests = "upgrade-insecure-requests; "
 	}
 	return fmt.Sprintf("%s"+
