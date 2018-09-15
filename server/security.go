@@ -56,7 +56,7 @@ func secureHandler(secureMiddleware *secure.Secure) gin.HandlerFunc {
 
 func (s Server) getSecureOptions() secure.Options {
 	options := secure.Options{
-		SSLRedirect:          s.tls || s.tlsProxy,
+		SSLRedirect:          s.tls,
 		STSSeconds:           315360000,
 		STSIncludeSubdomains: true,
 		STSPreload:           true,
