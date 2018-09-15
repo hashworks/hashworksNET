@@ -2,10 +2,10 @@
 package main
 
 import (
+	"./server"
 	"flag"
 	"fmt"
 	"github.com/gin-gonic/gin"
-	"github.com/hashworks/hashworksNET/server"
 	"os"
 	"path"
 )
