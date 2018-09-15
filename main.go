@@ -12,18 +12,19 @@ import (
 
 var (
 	// Set the following uppercase three with -ldflags "-X main.VERSION=v1.2.3 [...]"
-	VERSION      string = "unknown"
-	BUILD_COMMIT string = "unknown"
-	BUILD_DATE   string = "unknown"
-	GIN_MODE     string = gin.DebugMode
-	versionFlag  bool
-	address      string
-	port         int
-	tls          bool
-	tlsProxy     bool
-	domain       string
-	cacheDir     string
-	debug        bool
+	VERSION       string = "unknown"
+	BUILD_COMMIT  string = "unknown"
+	BUILD_DATE    string = "unknown"
+	GIN_MODE      string = gin.DebugMode
+	versionFlag   bool
+	address       string
+	port          int
+	tls           bool
+	tlsProxy      bool
+	gzipExtension bool
+	domain        string
+	cacheDir      string
+	debug         bool
 )
 
 func main() {
@@ -34,6 +35,7 @@ func main() {
 	flagSet.IntVar(&port, "port", 65432, "The port to listen on.")
 	flagSet.BoolVar(&tls, "tls", false, "Provide HTTP with TLS. Requires a domain.")
 	flagSet.BoolVar(&tlsProxy, "tlsProxy", false, "Set this if the service is behind a TLS proxy.")
+	flagSet.BoolVar(&gzipExtension, "gzip", false, "Enabled the gzip extension.")
 	flagSet.StringVar(&domain, "domain", "", "The domain the service is reachable at..")
 	flagSet.StringVar(&cacheDir, "cacheDir", getDefaultCacheDir(), "Cache directory, f.e. for certificates.")
 	flagSet.BoolVar(&debug, "debug", false, "debug mode.")
@@ -50,7 +52,7 @@ func main() {
 		fmt.Println()
 		fmt.Println("Published under the GNU General Public License v3.0.")
 	default:
-		s := server.NewServer(GIN_MODE, tls, tlsProxy, domain, cacheDir, debug)
+		s := server.NewServer(GIN_MODE, tls, tlsProxy, gzipExtension, domain, cacheDir, debug)
 		if tls {
 			if domain != "" {
 				if err := s.RunTLS(fmt.Sprintf("%s:%d", address, port)); err != nil {

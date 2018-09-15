@@ -30,7 +30,7 @@ type Server struct {
 	debug     bool
 }
 
-func NewServer(ginMode string, tls, tlsProxy bool, domain, cacheDir string, debug bool) Server {
+func NewServer(ginMode string, tls, tlsProxy, gzipExtension bool, domain, cacheDir string, debug bool) Server {
 	gin.SetMode(ginMode)
 
 	cssBytes := MustAsset("css/main.css")
@@ -52,7 +52,9 @@ func NewServer(ginMode string, tls, tlsProxy bool, domain, cacheDir string, debu
 
 	s.Router.Use(secureHandler(secure.New(s.getSecureOptions())))
 	s.Router.Use(s.preHandler())
-	s.Router.Use(gzip.Gzip(gzip.DefaultCompression))
+	if gzipExtension {
+		s.Router.Use(gzip.Gzip(gzip.DefaultCompression))
+	}
 
 	s.loadTemplates()
 
