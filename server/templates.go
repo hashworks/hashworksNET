@@ -10,11 +10,20 @@ import (
 func (s Server) templateFunctionMap() template.FuncMap {
 	return template.FuncMap{
 		"css": func() template.CSS {
-			if !s.debug {
+			if !s.config.Debug {
 				return s.css
 			} else { // On debug mode we normally don't include the CSS in our binary. This means we can edit it live
 				return template.CSS(MustAsset("css/main.css"))
 			}
+		},
+		"GitHubURL": func() template.URL {
+			return template.URL(s.config.GitHubURL)
+		},
+		"RedditURL": func() template.URL {
+			return template.URL(s.config.RedditURL)
+		},
+		"SteamURL": func() template.URL {
+			return template.URL(s.config.SteamURL)
 		},
 	}
 }
@@ -41,7 +50,7 @@ func (s Server) loadTemplates() {
 			panic(err)
 		}
 		multiT.Add(basename, tmpl)
-		if s.debug {
+		if s.config.Debug {
 			log.Printf("Loaded templates/%s as %s\n", templateName, basename)
 		}
 	}

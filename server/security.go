@@ -12,10 +12,10 @@ import (
 
 func (s Server) RunTLS(address string) error {
 	m := autocert.Manager{
-		Email:      "mail@hashworks.net",
+		Email:      s.config.EMail,
 		Prompt:     autocert.AcceptTOS,
-		HostPolicy: autocert.HostWhitelist(s.domain),
-		Cache:      autocert.DirCache(s.cacheDir),
+		HostPolicy: autocert.HostWhitelist(s.config.Domain),
+		Cache:      autocert.DirCache(s.config.CacheDir),
 	}
 
 	httpServer := &http.Server{
@@ -56,11 +56,11 @@ func secureHandler(secureMiddleware *secure.Secure) gin.HandlerFunc {
 
 func (s Server) getSecureOptions() secure.Options {
 	options := secure.Options{
-		SSLRedirect:          s.tls,
+		SSLRedirect:          s.config.TLS,
 		STSSeconds:           315360000,
 		STSIncludeSubdomains: true,
 		STSPreload:           true,
-		ForceSTSHeader:       s.tlsProxy,
+		ForceSTSHeader:       s.config.TLSProxy,
 		FrameDeny:            true,
 		ContentTypeNosniff:   true,
 		BrowserXssFilter:     true,
@@ -78,13 +78,13 @@ func (s Server) getSecureOptions() secure.Options {
 			"vibrate 'none';" +
 			"fullscreen 'none';" +
 			"payment 'none'",
-		ContentSecurityPolicy: s.getCSP(!s.debug),
+		ContentSecurityPolicy: s.getCSP(!s.config.Debug),
 	}
 
-	if s.domain != "" {
-		options.AllowedHosts = []string{s.domain}
-		if s.tls || s.tlsProxy {
-			options.SSLHost = s.domain
+	if s.config.Domain != "" {
+		options.AllowedHosts = []string{s.config.Domain}
+		if s.config.TLS || s.config.TLSProxy {
+			options.SSLHost = s.config.Domain
 		}
 	}
 
@@ -97,7 +97,7 @@ func (s Server) getCSP(safeCSS bool) string {
 		styleSrc = fmt.Sprintf("'sha256-%s'", s.cssSha256)
 	}
 	upgradeInSecureRequests := ""
-	if s.tls || s.tlsProxy {
+	if s.config.TLS || s.config.TLSProxy {
 		upgradeInSecureRequests = "upgrade-insecure-requests; "
 	}
 	return fmt.Sprintf("%s"+

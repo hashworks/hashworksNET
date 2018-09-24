@@ -1,3 +1,4 @@
 css
 bin
+static/pgp_public_key.asc
 server/bindata.go

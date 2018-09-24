@@ -1,7 +1,7 @@
 BINARY_PRE=*.go server/*.go css/main.css server/bindata.go
 BINARY_SOURCE=*.go
 
-BINDATA_DATA=css/main.css static/* templates/* img/*
+BINDATA_DATA=css/main.css static/pgp_public_key.asc templates/* img/*
 BINDATA_FLAGS=-pkg server
 BINDATA_FLAGS_DEBUG=-pkg server -debug
 

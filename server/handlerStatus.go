@@ -46,7 +46,10 @@ func (s Server) handlerStatusSVG200x115(c *gin.Context) {
 
 func (s Server) handlerStatusSVG(c *gin.Context, width, height int) {
 	httpClient, err := client.NewHTTPClient(client.HTTPConfig{
-		Addr: "http://127.0.0.1:8086",
+		Addr:      s.config.InfluxAddress,
+		Username:  s.config.InfluxUsername,
+		Password:  s.config.InfluxPassword,
+		UserAgent: "hashworksNET/" + s.config.Version,
 	})
 	defer httpClient.Close()
 
@@ -56,7 +59,7 @@ func (s Server) handlerStatusSVG(c *gin.Context, width, height int) {
 	}
 
 	q := client.Query{
-		Command:   "SELECT mean(value) FROM bpm WHERE host = 'Justin Kromlinger' AND time > now() - 12h GROUP BY time(5m)",
+		Command:   "SELECT mean(value) FROM bpm WHERE host = '" + s.config.InfluxHost + "' AND time > now() - 12h GROUP BY time(5m)",
 		Database:  "body",
 		Precision: "s",
 	}
@@ -73,7 +76,7 @@ func (s Server) handlerStatusSVG(c *gin.Context, width, height int) {
 		return
 	}
 
-	if s.debug {
+	if s.config.Debug {
 		log.Println(resp.Results[0].Series[0].Values)
 	}
 

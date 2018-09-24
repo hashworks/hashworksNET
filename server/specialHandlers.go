@@ -18,7 +18,7 @@ func recoveryHandler(c *gin.Context, err interface{}) {
 
 func (s Server) preHandler() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		if s.debug {
+		if s.config.Debug {
 			// Reload templates, they might have changed
 			s.loadTemplates()
 		}
@@ -37,7 +37,7 @@ func (s Server) preHandler() gin.HandlerFunc {
 
 func (s Server) cacheHandler(store persistence.CacheStore, expire time.Duration, handle gin.HandlerFunc) gin.HandlerFunc {
 	// No cache in debug mode
-	if s.debug {
+	if s.config.Debug {
 		return handle
 	}
 	return cache.CachePage(store, expire, handle)

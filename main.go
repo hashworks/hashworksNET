@@ -12,33 +12,37 @@ import (
 
 var (
 	// Set the following uppercase three with -ldflags "-X main.VERSION=v1.2.3 [...]"
-	VERSION       string = "unknown"
-	BUILD_COMMIT  string = "unknown"
-	BUILD_DATE    string = "unknown"
-	GIN_MODE      string = gin.DebugMode
-	versionFlag   bool
-	address       string
-	port          int
-	tls           bool
-	tlsProxy      bool
-	gzipExtension bool
-	domain        string
-	cacheDir      string
-	debug         bool
+	VERSION      string = "unknown"
+	BUILD_COMMIT string = "unknown"
+	BUILD_DATE   string = "unknown"
+	GIN_MODE     string = gin.DebugMode
+	versionFlag  bool
+	address      string
+	port         int
 )
 
 func main() {
 	flagSet := flag.NewFlagSet(os.Args[0], flag.ExitOnError)
 
+	config := server.Config{Version: VERSION, GinMode: GIN_MODE}
+
 	flagSet.BoolVar(&versionFlag, "version", false, "Displays the version and license information.")
 	flagSet.StringVar(&address, "address", "", "The address to listen on.")
 	flagSet.IntVar(&port, "port", 65432, "The port to listen on.")
-	flagSet.BoolVar(&tls, "tls", false, "Provide HTTP with TLS. Requires a domain.")
-	flagSet.BoolVar(&tlsProxy, "tlsProxy", false, "Set this if the service is behind a TLS proxy.")
-	flagSet.BoolVar(&gzipExtension, "gzip", false, "Enabled the gzip extension.")
-	flagSet.StringVar(&domain, "domain", "", "The domain the service is reachable at..")
-	flagSet.StringVar(&cacheDir, "cacheDir", getDefaultCacheDir(), "Cache directory, f.e. for certificates.")
-	flagSet.BoolVar(&debug, "debug", false, "debug mode.")
+	flagSet.BoolVar(&config.TLS, "tls", false, "Provide HTTP with TLS. Requires a domain.")
+	flagSet.BoolVar(&config.TLSProxy, "tlsProxy", false, "Set this if the service is behind a TLS proxy.")
+	flagSet.BoolVar(&config.GZIPExtension, "gzip", false, "Enabled the gzip extension.")
+	flagSet.StringVar(&config.CacheDir, "cacheDir", getDefaultCacheDir(), "Cache directory, f.e. for certificates.")
+	flagSet.StringVar(&config.Domain, "domain", "", "The domain the service is reachable at.")
+	flagSet.StringVar(&config.EMail, "email", "mail@hashworks.net", "The EMail the host is reachable at.")
+	flagSet.StringVar(&config.RedditURL, "reddit", "https://www.reddit.com/user/hashworks/posts/", "URL to the Reddit profile of the host.")
+	flagSet.StringVar(&config.SteamURL, "steam", "https://steamcommunity.com/id/hashworks", "URL to the Steam profile of the host.")
+	flagSet.StringVar(&config.GitHubURL, "github", "https://github.com/hashworks", "URL to the GitHub profile of the host.")
+	flagSet.StringVar(&config.InfluxAddress, "influxAddress", "http://127.0.0.1:8086", "InfluxDB address.")
+	flagSet.StringVar(&config.InfluxUsername, "influxUsername", "", "InfluxDB username.")
+	flagSet.StringVar(&config.InfluxPassword, "influxPassword", "", "InfluxDB password.")
+	flagSet.StringVar(&config.InfluxHost, "influxHost", "Justin Kromlinger", "InfluxDB BPM host.")
+	flagSet.BoolVar(&config.Debug, "debug", false, "debug mode.")
 
 	flagSet.Parse(os.Args[1:])
 
@@ -52,9 +56,9 @@ func main() {
 		fmt.Println()
 		fmt.Println("Published under the GNU General Public License v3.0.")
 	default:
-		s := server.NewServer(GIN_MODE, tls, tlsProxy, gzipExtension, domain, cacheDir, debug)
-		if tls {
-			if domain != "" {
+		s := server.NewServer(config)
+		if config.TLS {
+			if config.Domain != "" {
 				if err := s.RunTLS(fmt.Sprintf("%s:%d", address, port)); err != nil {
 					fmt.Printf("Failed to start the tls server: %s\n", err)
 					os.Exit(1)
