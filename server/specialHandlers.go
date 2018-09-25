@@ -18,10 +18,6 @@ func (s Server) recoveryHandler(c *gin.Context, err interface{}) {
 	switch err.(type) {
 	case error:
 		message = err.(error).Error()
-	case string:
-		message = err.(string)
-	case int:
-		message = string(err.(int))
 	default:
 		message = "Unknown"
 	}
@@ -61,9 +57,6 @@ func (s Server) cacheHandler(withoutQuery bool, withoutHeader bool, store persis
 	// No cache in debug mode
 	if s.config.Debug {
 		return handle
-	}
-	if withoutHeader {
-		return cache.CachePageWithoutHeader(store, expire, handle)
 	}
 	if withoutQuery {
 		return cache.CachePageWithoutQuery(store, expire, handle)
