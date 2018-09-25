@@ -92,15 +92,10 @@ func NewServer(config Config) (Server, error) {
 
 	s.Router.GET("/", s.cacheHandler(true, false, s.store, 10*time.Minute, s.handlerIndex))
 	s.Router.GET("/status", s.cacheHandler(true, false, s.store, 10*time.Minute, s.handlerStatus))
-	s.Router.GET("/status-1940x1060.svg", s.cacheHandler(true, false, s.store, 10*time.Minute, s.handlerStatusSVG1940x1060))
-	s.Router.GET("/status-1700x700.svg", s.cacheHandler(true, false, s.store, 10*time.Minute, s.handlerStatusSVG1700x700))
-	s.Router.GET("/status-1380x520.svg", s.cacheHandler(true, false, s.store, 10*time.Minute, s.handlerStatusSVG1380x520))
-	s.Router.GET("/status-1145x385.svg", s.cacheHandler(true, false, s.store, 10*time.Minute, s.handlerStatusSVG1145x385))
-	s.Router.GET("/status-780x385.svg", s.cacheHandler(true, false, s.store, 10*time.Minute, s.handlerStatusSVG780x385))
-	s.Router.GET("/status-500x335.svg", s.cacheHandler(true, false, s.store, 10*time.Minute, s.handlerStatusSVG500x335))
-	s.Router.GET("/status-400x225.svg", s.cacheHandler(true, false, s.store, 10*time.Minute, s.handlerStatusSVG400x225))
-	s.Router.GET("/status-200x115.svg", s.cacheHandler(true, false, s.store, 10*time.Minute, s.handlerStatusSVG200x115))
+	for _, dimension := range svgDimensions {
+		s.Router.GET(fmt.Sprintf("/status-%dx%d.svg", dimension[0], dimension[1]), s.cacheHandler(true, false, s.store, 10*time.Minute, s.handlerStatusSVG(dimension[0], dimension[1])))
 
+	}
 	s.Router.NoRoute(s.cacheHandler(true, false, s.store, 10*time.Minute, func(c *gin.Context) {
 		c.Header("Cache-Control", "max-age=600")
 		c.HTML(http.StatusNotFound, "error404", gin.H{
