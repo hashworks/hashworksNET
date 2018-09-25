@@ -3,9 +3,14 @@ package server
 import (
 	"crypto/sha256"
 	"encoding/base64"
+	"errors"
+	"fmt"
 	"github.com/ekyoung/gin-nice-recovery"
 	"github.com/hashworks/hashworksNET/server/bindata"
 	"github.com/unrolled/secure"
+	"os"
+	"path"
+	"regexp"
 	"time"
 
 	// gin/logger.go might report undefined: isatty.IsCygwinTerminal
@@ -46,7 +51,11 @@ type Config struct {
 	InfluxPassword string
 }
 
-func NewServer(config Config) Server {
+func NewServer(config Config) (Server, error) {
+	err := testConfig(&config)
+	if err != nil {
+		return Server{}, err
+	}
 	gin.SetMode(config.GinMode)
 
 	cssBytes := bindata.MustAsset("css/main.css")
@@ -99,5 +108,34 @@ func NewServer(config Config) Server {
 		})
 	}))
 
-	return s
+	return s, nil
+}
+
+func testConfig(c *Config) error {
+	var re = regexp.MustCompile(`^http(?:s)?:\/\/[\S^:]+(?::[0-9]+)?(?:\S+)?$`)
+
+	if c.CacheDir == "" {
+		c.CacheDir = GetDefaultCacheDir()
+	}
+	if c.TLS && c.Domain == "" {
+		return errors.New("TLS requires a domain.")
+	}
+	if c.InfluxHost == "" {
+		return errors.New("Influx host cannot be empty.")
+	}
+	if c.InfluxAddress == "" {
+		return errors.New("Influx address cannot be empty.")
+	} else {
+		if re.FindStringIndex(c.InfluxAddress) == nil {
+			return errors.New("Influx address must be a valid URI.")
+		}
+	}
+	return nil
+}
+
+func GetDefaultCacheDir() string {
+	if userCacheDir, err := os.UserCacheDir(); err == nil {
+		return path.Join(userCacheDir, "hashworksNET")
+	}
+	return "cache"
 }

@@ -7,7 +7,6 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/hashworks/hashworksNET/server"
 	"os"
-	"path"
 )
 
 var (
@@ -32,7 +31,7 @@ func main() {
 	flagSet.BoolVar(&config.TLS, "tls", false, "Provide HTTP with TLS. Requires a domain.")
 	flagSet.BoolVar(&config.TLSProxy, "tlsProxy", false, "Set this if the service is behind a TLS proxy.")
 	flagSet.BoolVar(&config.GZIPExtension, "gzip", false, "Enabled the gzip extension.")
-	flagSet.StringVar(&config.CacheDir, "cacheDir", getDefaultCacheDir(), "Cache directory, f.e. for certificates.")
+	flagSet.StringVar(&config.CacheDir, "cacheDir", server.GetDefaultCacheDir(), "Cache directory, f.e. for certificates.")
 	flagSet.StringVar(&config.Domain, "domain", "", "The domain the service is reachable at.")
 	flagSet.StringVar(&config.EMail, "email", "mail@hashworks.net", "The EMail the host is reachable at.")
 	flagSet.StringVar(&config.RedditURL, "reddit", "https://www.reddit.com/user/hashworks/posts/", "URL to the Reddit profile of the host.")
@@ -56,16 +55,15 @@ func main() {
 		fmt.Println()
 		fmt.Println("Published under the GNU General Public License v3.0.")
 	default:
-		s := server.NewServer(config)
+		s, err := server.NewServer(config)
+		if err != nil {
+			fmt.Println("Error: ", err.Error())
+			os.Exit(2)
+		}
 		if config.TLS {
-			if config.Domain != "" {
-				if err := s.RunTLS(fmt.Sprintf("%s:%d", address, port)); err != nil {
-					fmt.Printf("Failed to start the tls server: %s\n", err)
-					os.Exit(1)
-				}
-			} else {
-				fmt.Println("Error: TLS requires a domain.")
-				os.Exit(2)
+			if err := s.RunTLS(fmt.Sprintf("%s:%d", address, port)); err != nil {
+				fmt.Printf("Failed to start the tls server: %s\n", err)
+				os.Exit(1)
 			}
 		} else {
 			if err := s.Router.Run(fmt.Sprintf("%s:%d", address, port)); err != nil {
@@ -74,11 +72,4 @@ func main() {
 			}
 		}
 	}
-}
-
-func getDefaultCacheDir() string {
-	if userCacheDir, err := os.UserCacheDir(); err == nil {
-		return path.Join(userCacheDir, "hashworksNET")
-	}
-	return "cache"
 }
