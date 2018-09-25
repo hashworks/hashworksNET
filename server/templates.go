@@ -2,6 +2,7 @@ package server
 
 import (
 	"github.com/gin-contrib/multitemplate"
+	"github.com/hashworks/hashworksNET/server/bindata"
 	"html/template"
 	"log"
 	"strings"
@@ -13,7 +14,7 @@ func (s Server) templateFunctionMap() template.FuncMap {
 			if !s.config.Debug {
 				return s.css
 			} else { // On debug mode we normally don't include the CSS in our binary. This means we can edit it live
-				return template.CSS(MustAsset("css/main.css"))
+				return template.CSS(bindata.MustAsset("css/main.css"))
 			}
 		},
 		"GitHubURL": func() template.URL {
@@ -30,7 +31,7 @@ func (s Server) templateFunctionMap() template.FuncMap {
 
 func (s Server) loadTemplates() {
 	// Load template file names from Asset
-	templateNames, err := AssetDir("templates")
+	templateNames, err := bindata.AssetDir("templates")
 	if err != nil {
 		panic(err)
 	}
@@ -45,7 +46,7 @@ func (s Server) loadTemplates() {
 		index := strings.Index(templateName, ".")
 		basename := templateName[:index]
 		tmpl := tmpl.New(basename)
-		tmpl, err := tmpl.Parse(string(MustAsset("templates/" + templateName)))
+		tmpl, err := tmpl.Parse(string(bindata.MustAsset("templates/" + templateName)))
 		if err != nil {
 			panic(err)
 		}

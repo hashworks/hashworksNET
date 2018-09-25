@@ -1,9 +1,9 @@
-BINARY_PRE=*.go server/*.go css/main.css server/bindata.go
+BINARY_PRE=*.go server/*.go css/main.css server/bindata/bindata.go
 BINARY_SOURCE=*.go
 
 BINDATA_DATA=css/main.css static/pgp_public_key.asc templates/* img/*
-BINDATA_FLAGS=-pkg server
-BINDATA_FLAGS_DEBUG=-pkg server -debug
+BINDATA_FLAGS=-pkg bindata
+BINDATA_FLAGS_DEBUG=-pkg bindata -debug
 
 SASS_PRE=sass/*.scss
 SASS_SOURCE=sass/main.scss
@@ -38,7 +38,7 @@ css/main.css: $(SASS_PRE)
 debug-bindata: BINDATA_FLAGS=$(BINDATA_FLAGS_DEBUG)
 debug-bindata: server/bindata.go
 
-server/bindata.go: $(BINDATA_DATA)
+server/bindata/bindata.go: $(BINDATA_DATA)
 	go-bindata $(BINDATA_FLAGS) -o $@ $(BINDATA_DATA)
 
 

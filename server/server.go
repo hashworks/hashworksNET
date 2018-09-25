@@ -4,6 +4,7 @@ import (
 	"crypto/sha256"
 	"encoding/base64"
 	"github.com/ekyoung/gin-nice-recovery"
+	"github.com/hashworks/hashworksNET/server/bindata"
 	"github.com/unrolled/secure"
 	"time"
 
@@ -48,7 +49,7 @@ type Config struct {
 func NewServer(config Config) Server {
 	gin.SetMode(config.GinMode)
 
-	cssBytes := MustAsset("css/main.css")
+	cssBytes := bindata.MustAsset("css/main.css")
 	cssSha256 := sha256.Sum256(cssBytes)
 
 	s := Server{
@@ -69,8 +70,8 @@ func NewServer(config Config) Server {
 
 	s.loadTemplates()
 
-	s.Router.StaticFS("/static", &assetfs.AssetFS{Asset: Asset, AssetDir: AssetDir, AssetInfo: AssetInfo, Prefix: "static"})
-	s.Router.StaticFS("/img", &assetfs.AssetFS{Asset: Asset, AssetDir: AssetDir, AssetInfo: AssetInfo, Prefix: "img"})
+	s.Router.StaticFS("/static", &assetfs.AssetFS{Asset: bindata.Asset, AssetDir: bindata.AssetDir, AssetInfo: bindata.AssetInfo, Prefix: "static"})
+	s.Router.StaticFS("/img", &assetfs.AssetFS{Asset: bindata.Asset, AssetDir: bindata.AssetDir, AssetInfo: bindata.AssetInfo, Prefix: "img"})
 
 	s.Router.GET("/robots.txt", func(c *gin.Context) {
 		c.String(http.StatusOK, "User-agent: *\nDisallow: /status\nDisallow: /status.svg")
