@@ -11,7 +11,7 @@ import (
 	"time"
 )
 
-func (s Server) recoveryHandler(c *gin.Context, err interface{}) {
+func (s Server) recoveryHandlerStatus(statusCode int, c *gin.Context, err interface{}) {
 	timeString := time.Now().Format(time.RFC3339)
 	var message string
 
@@ -28,10 +28,14 @@ func (s Server) recoveryHandler(c *gin.Context, err interface{}) {
 		message = fmt.Sprintf("There was an internal server error, please report this to %s.", s.config.EMail)
 	}
 
-	c.AbortWithStatusJSON(http.StatusInternalServerError, map[string]string{
+	c.AbortWithStatusJSON(statusCode, map[string]string{
 		"time":  timeString,
 		"error": message,
 	})
+}
+
+func (s Server) recoveryHandler(c *gin.Context, err interface{}) {
+	s.recoveryHandlerStatus(http.StatusInternalServerError, c, err)
 }
 
 func (s Server) preHandler() gin.HandlerFunc {
