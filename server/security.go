@@ -46,11 +46,6 @@ func (s Server) secureHandler(secureMiddleware *secure.Secure) gin.HandlerFunc {
 			s.recoveryHandler(c, err)
 			return
 		}
-
-		// Avoid header rewrite if response is a redirection.
-		if status := c.Writer.Status(); status > 300 && status < 399 {
-			c.Abort()
-		}
 	}
 }
 
