@@ -54,7 +54,7 @@ func (s Server) handlerStatusSVG(c *gin.Context, width, height int) {
 	defer httpClient.Close()
 
 	if err != nil {
-		recoveryHandler(c, err)
+		s.recoveryHandler(c, err)
 		return
 	}
 
@@ -67,12 +67,12 @@ func (s Server) handlerStatusSVG(c *gin.Context, width, height int) {
 	resp, err := httpClient.Query(q)
 
 	if err != nil {
-		recoveryHandler(c, err)
+		s.recoveryHandler(c, err)
 		return
 	}
 
 	if len(resp.Results) == 0 || len(resp.Results[0].Series) == 0 || len(resp.Results[0].Series[0].Values) == 0 {
-		recoveryHandler(c, errors.New("InfluxDB returned an empty result"))
+		s.recoveryHandler(c, errors.New("InfluxDB returned an empty result"))
 		return
 	}
 
@@ -98,14 +98,14 @@ func (s Server) handlerStatusSVG(c *gin.Context, width, height int) {
 
 		timestamp, err := resp.Results[0].Series[0].Values[i][0].(json.Number).Int64()
 		if err != nil {
-			recoveryHandler(c, err)
+			s.recoveryHandler(c, err)
 			return
 		}
 		timeSeries.XValues = append(timeSeries.XValues, time.Unix(timestamp, 0))
 
 		bpm, err := resp.Results[0].Series[0].Values[i][1].(json.Number).Float64()
 		if err != nil {
-			recoveryHandler(c, err)
+			s.recoveryHandler(c, err)
 			return
 		}
 		timeSeries.YValues = append(timeSeries.YValues, bpm)
@@ -152,7 +152,7 @@ func (s Server) handlerStatusSVG(c *gin.Context, width, height int) {
 	c.Header("Content-Security-Policy", s.getCSP(false)) // Our SVGs require inline CSS
 
 	if err := graph.Render(chart.SVG, c.Writer); err != nil {
-		recoveryHandler(c, err)
+		s.recoveryHandler(c, err)
 		return
 	}
 

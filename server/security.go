@@ -38,12 +38,12 @@ func (s Server) RunTLS(address string) error {
 	return httpServer.ListenAndServeTLS("", "")
 }
 
-func secureHandler(secureMiddleware *secure.Secure) gin.HandlerFunc {
+func (s Server) secureHandler(secureMiddleware *secure.Secure) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		err := secureMiddleware.Process(c.Writer, c.Request)
 
 		if err != nil {
-			recoveryHandler(c, err)
+			s.recoveryHandler(c, err)
 			return
 		}
 

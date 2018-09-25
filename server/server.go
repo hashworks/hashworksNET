@@ -59,9 +59,9 @@ func NewServer(config Config) Server {
 		config:    config,
 	}
 
-	s.Router.Use(nice.Recovery(recoveryHandler))
+	s.Router.Use(nice.Recovery(s.recoveryHandler))
 
-	s.Router.Use(secureHandler(secure.New(s.getSecureOptions())))
+	s.Router.Use(s.secureHandler(secure.New(s.getSecureOptions())))
 	s.Router.Use(s.preHandler())
 	if config.GZIPExtension {
 		s.Router.Use(gzip.Gzip(gzip.DefaultCompression))
