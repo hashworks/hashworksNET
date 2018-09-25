@@ -83,7 +83,7 @@ func NewServer(config Config) (Server, error) {
 	s.Router.StaticFS("/img", &assetfs.AssetFS{Asset: bindata.Asset, AssetDir: bindata.AssetDir, AssetInfo: bindata.AssetInfo, Prefix: "img"})
 
 	s.Router.GET("/robots.txt", func(c *gin.Context) {
-		c.String(http.StatusOK, "User-agent: *\nDisallow: /status\nDisallow: /status.svg")
+		c.String(http.StatusOK, "User-agent: *\nDisallow: /status\nDisallow: /status-*.svg")
 	})
 
 	s.Router.GET("/favicon.ico", func(c *gin.Context) {
