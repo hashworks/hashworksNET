@@ -4,7 +4,6 @@ import (
 	"github.com/gin-contrib/multitemplate"
 	"github.com/hashworks/hashworksNET/server/bindata"
 	"html/template"
-	"log"
 	"strings"
 )
 
@@ -51,9 +50,6 @@ func (s Server) loadTemplates() {
 			panic(err)
 		}
 		multiT.Add(basename, tmpl)
-		if s.config.Debug {
-			log.Printf("Loaded templates/%s as %s\n", templateName, basename)
-		}
 	}
 	// multitemplate is our new HTML renderer
 	s.Router.HTMLRender = multiT
