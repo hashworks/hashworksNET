@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"github.com/ekyoung/gin-nice-recovery"
 	"github.com/hashworks/hashworksNET/server/bindata"
-	"github.com/unrolled/secure"
 	"os"
 	"path"
 	"regexp"
@@ -35,7 +34,6 @@ type Server struct {
 type Config struct {
 	Version        string
 	GinMode        string
-	TLS            bool
 	TLSProxy       bool
 	GZIPExtension  bool
 	CacheDir       string
@@ -71,7 +69,7 @@ func NewServer(config Config) (Server, error) {
 
 	s.Router.Use(nice.Recovery(s.recoveryHandler))
 
-	s.Router.Use(s.secureHandler(secure.New(s.getSecureOptions())))
+	s.Router.Use(s.secureHandler(s.getSecureMiddleware()))
 	s.Router.Use(s.preHandler())
 	if config.GZIPExtension {
 		s.Router.Use(gzip.Gzip(gzip.DefaultCompression))
@@ -111,9 +109,6 @@ func testConfig(c *Config) error {
 
 	if c.CacheDir == "" {
 		c.CacheDir = GetDefaultCacheDir()
-	}
-	if c.TLS && c.Domain == "" {
-		return errors.New("TLS requires a domain.")
 	}
 	if c.InfluxHost == "" {
 		return errors.New("Influx host cannot be empty.")

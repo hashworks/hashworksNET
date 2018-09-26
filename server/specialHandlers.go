@@ -25,12 +25,13 @@ func (s Server) recoveryHandlerStatus(statusCode int, c *gin.Context, err interf
 	log.Printf("%s - Error: %s", timeString, message)
 
 	if !s.config.Debug {
-		message = fmt.Sprintf("There was an internal server error, please report this to %s.", s.config.EMail)
+		message = fmt.Sprintf("There was an error, please report this to %s.", s.config.EMail)
 	}
 
-	c.AbortWithStatusJSON(statusCode, map[string]string{
-		"time":  timeString,
-		"error": message,
+	c.AbortWithStatusJSON(statusCode, map[string]interface{}{
+		"time":   timeString,
+		"error":  message,
+		"status": statusCode,
 	})
 }
 

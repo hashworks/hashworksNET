@@ -28,7 +28,6 @@ func main() {
 	flagSet.BoolVar(&versionFlag, "version", false, "Displays the version and license information.")
 	flagSet.StringVar(&address, "address", "", "The address to listen on.")
 	flagSet.IntVar(&port, "port", 65432, "The port to listen on.")
-	flagSet.BoolVar(&config.TLS, "tls", false, "Provide HTTP with TLS. Requires a domain.")
 	flagSet.BoolVar(&config.TLSProxy, "tlsProxy", false, "Set this if the service is behind a TLS proxy.")
 	flagSet.BoolVar(&config.GZIPExtension, "gzip", false, "Enabled the gzip extension.")
 	flagSet.StringVar(&config.CacheDir, "cacheDir", server.GetDefaultCacheDir(), "Cache directory, f.e. for certificates.")
@@ -60,16 +59,9 @@ func main() {
 			fmt.Println("Error: ", err.Error())
 			os.Exit(2)
 		}
-		if config.TLS {
-			if err := s.RunTLS(fmt.Sprintf("%s:%d", address, port)); err != nil {
-				fmt.Printf("Failed to start the tls server: %s\n", err)
-				os.Exit(1)
-			}
-		} else {
-			if err := s.Router.Run(fmt.Sprintf("%s:%d", address, port)); err != nil {
-				fmt.Printf("Error: Failed to start the http server: %s\n", err)
-				os.Exit(1)
-			}
+		if err := s.Router.Run(fmt.Sprintf("%s:%d", address, port)); err != nil {
+			fmt.Printf("Error: Failed to start the http server: %s\n", err)
+			os.Exit(1)
 		}
 	}
 }

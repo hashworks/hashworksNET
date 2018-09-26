@@ -280,13 +280,6 @@ func TestNoDebugCSS(t *testing.T) {
 
 func TestConfigError(t *testing.T) {
 	_, err := NewServer(Config{
-		TLS:        true,
-		Domain:     "",
-		InfluxHost: "Max Mustermann",
-	})
-	assert.EqualErrorf(t, err, "TLS requires a domain.", "")
-
-	_, err = NewServer(Config{
 		InfluxHost: "",
 	})
 	assert.EqualErrorf(t, err, "Influx host cannot be empty.", "")
@@ -302,4 +295,24 @@ func TestConfigError(t *testing.T) {
 		InfluxAddress: "127.0.0.1:80",
 	})
 	assert.EqualErrorf(t, err, "Influx address must be a valid URI.", "")
+}
+
+func TestWrongHost(t *testing.T) {
+	s, err := NewServer(Config{
+		Domain:        "test.example.de",
+		InfluxAddress: "http://127.0.0.1:1",
+		InfluxHost:    "Max Mustermann",
+		TLSProxy:      true,
+		GinMode:       gin.TestMode,
+		Debug:         true,
+	})
+	if err != nil {
+		panic(err)
+	}
+	w := httptest.NewRecorder()
+	req, _ := http.NewRequest("GET", "/", nil)
+	s.Router.ServeHTTP(w, req)
+
+	assert.Equal(t, http.StatusBadRequest, w.Code)
+	assert.Contains(t, w.Body.String(), "bad host name")
 }
