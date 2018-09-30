@@ -34,13 +34,8 @@ type Config struct {
 	GinMode        string
 	TLSProxy       bool
 	GZIPExtension  bool
-	CacheDir       string
 	Debug          bool
 	Domain         string
-	EMail          string
-	RedditURL      string
-	SteamURL       string
-	GitHubURL      string
 	InfluxHost     string
 	InfluxAddress  string
 	InfluxUsername string
@@ -103,15 +98,13 @@ func NewServer(config Config) (Server, error) {
 }
 
 func testConfig(c *Config) error {
-	var re = regexp.MustCompile(`^http(?:s)?:\/\/[\S^:]+(?::[0-9]+)?(?:\S+)?$`)
-
 	if c.InfluxHost == "" {
 		return errors.New("Influx host cannot be empty.")
 	}
 	if c.InfluxAddress == "" {
 		return errors.New("Influx address cannot be empty.")
 	} else {
-		if re.FindStringIndex(c.InfluxAddress) == nil {
+		if regexp.MustCompile(`^http(?:s)?:\/\/[\S^:]+(?::[0-9]+)?(?:\S+)?$`).FindStringIndex(c.InfluxAddress) == nil {
 			return errors.New("Influx address must be a valid URI.")
 		}
 	}

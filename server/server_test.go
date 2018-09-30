@@ -103,10 +103,6 @@ func TestBasicParallel(t *testing.T) {
 		InfluxHost:     "Max Mustermann",
 		InfluxUsername: "foo",
 		InfluxPassword: "bar",
-		EMail:          "test@hashworks.net",
-		RedditURL:      "https://www.reddit.com/user/hashworks/posts/",
-		SteamURL:       "https://steamcommunity.com/id/hashworks",
-		GitHubURL:      "https://github.com/hashworks",
 		GinMode:        gin.TestMode,
 		Debug:          true,
 	})
@@ -134,9 +130,6 @@ func (s *Server) headerTest(t *testing.T) {
 		s.Router.ServeHTTP(w, req)
 
 		assert.Equal(t, 200, w.Code)
-		assert.True(t, strings.Contains(w.Body.String(), s.config.RedditURL))
-		assert.True(t, strings.Contains(w.Body.String(), s.config.SteamURL))
-		assert.True(t, strings.Contains(w.Body.String(), s.config.GitHubURL))
 		assert.True(t, strings.Contains(w.Body.String(), fmt.Sprintf("<style type=\"text/css\" rel=\"stylesheet\">%s</style>", s.css)))
 	}
 }
@@ -156,7 +149,7 @@ func (s *Server) indexHandlerTest(t *testing.T) {
 	s.Router.ServeHTTP(w, req)
 
 	assert.Equal(t, 200, w.Code)
-	assert.True(t, strings.Contains(w.Body.String(), s.config.EMail))
+	assert.True(t, strings.Contains(w.Body.String(), "mail@hashworks.net"))
 }
 
 func (s *Server) statusHandlerTest(t *testing.T) {
@@ -255,7 +248,7 @@ func TestNoInfluxConnection(t *testing.T) {
 		s.Router.ServeHTTP(w, req)
 
 		assert.Equal(t, http.StatusBadGateway, w.Code)
-		assert.Contains(t, w.Body.String(), s.config.EMail)
+		assert.Contains(t, w.Body.String(), "mail@hashworks.net")
 	}
 }
 
@@ -274,7 +267,7 @@ func TestNoDebugCSS(t *testing.T) {
 	s.Router.ServeHTTP(w, req)
 
 	assert.Equal(t, http.StatusOK, w.Code)
-	assert.Contains(t, w.Body.String(), s.config.EMail)
+	assert.Contains(t, w.Body.String(), "mail@hashworks.net")
 	assert.True(t, strings.Contains(w.Body.String(), fmt.Sprintf("<style type=\"text/css\" rel=\"stylesheet\">%s</style>", s.css)))
 }
 

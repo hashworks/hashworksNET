@@ -16,15 +16,6 @@ func (s Server) templateFunctionMap() template.FuncMap {
 				return template.CSS(bindata.MustAsset("css/main.css"))
 			}
 		},
-		"GitHubURL": func() template.URL {
-			return template.URL(s.config.GitHubURL)
-		},
-		"RedditURL": func() template.URL {
-			return template.URL(s.config.RedditURL)
-		},
-		"SteamURL": func() template.URL {
-			return template.URL(s.config.SteamURL)
-		},
 	}
 }
 

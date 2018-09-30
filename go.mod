@@ -27,6 +27,7 @@ require (
 	github.com/stretchr/testify v1.2.2
 	github.com/ugorji/go/codec v0.0.0-20180831062425-e253f1f20942 // indirect
 	github.com/unrolled/secure v0.0.0-20180914162101-439d7b25425f
+	github.com/urfave/cli v1.20.0
 	github.com/wcharczuk/go-chart v2.0.2-0.20180910201446-872b97b99f76+incompatible
 	golang.org/x/crypto v0.0.0-20180910181607-0e37d006457b
 	golang.org/x/image v0.0.0-20180708004352-c73c2afc3b81 // indirect

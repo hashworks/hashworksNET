@@ -1,7 +1,6 @@
 package server
 
 import (
-	"fmt"
 	"github.com/gin-contrib/cache"
 	"github.com/gin-contrib/cache/persistence"
 	"github.com/gin-gonic/gin"
@@ -25,7 +24,7 @@ func (s Server) recoveryHandlerStatus(statusCode int, c *gin.Context, err interf
 	log.Printf("%s - Error: %s", timeString, message)
 
 	if !s.config.Debug {
-		message = fmt.Sprintf("There was an error, please report this to %s.", s.config.EMail)
+		message = "There was an error, please report this to mail@hashworks.net."
 	}
 
 	c.AbortWithStatusJSON(statusCode, map[string]interface{}{
