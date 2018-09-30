@@ -14,13 +14,13 @@ VERSION := $(shell git tag | tail -1)
 COMMIT  := $(shell git rev-parse --short HEAD 2>/dev/null)
 DATE    := $(shell date --iso-8601=seconds)
 
-deploy: GIN_MODE=release
-deploy: CGO_ENABLED=0
-deploy: bin/hashworksNET
-
 build: GIN_MODE=debug
 build: CGO_ENABLED=1
 build: bin/hashworksNET
+
+deploy: GIN_MODE=release
+deploy: CGO_ENABLED=0
+deploy: bin/hashworksNET
 
 run: build
 	bin/hashworksNET
