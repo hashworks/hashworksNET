@@ -19,9 +19,9 @@ pipeline:
 
   deploy:
     image: rics3n/drone-ansible:2
-    inventory: hive
+    inventory: staging
     inventory_path: deployment/inventories
-    playbook: deployment/staging.yml
+    playbook: deployment/deploy.yml
     secrets: [ ssh_key ]
     when:
       branch: master
