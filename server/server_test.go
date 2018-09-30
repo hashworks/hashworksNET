@@ -13,7 +13,7 @@ import (
 	"testing"
 )
 
-func emulateInflux() string {
+func emulateInflux(t *testing.T) string {
 	http.HandleFunc("/query", func(w http.ResponseWriter, _ *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
@@ -83,14 +83,10 @@ func emulateInflux() string {
 	})
 
 	listener, err := net.Listen("tcp", "127.0.0.1:0")
-	if err != nil {
-		panic(err)
-	}
+	assert.NoError(t, err)
 	go func() {
 		err := http.Serve(listener, nil)
-		if err != nil {
-			panic(err)
-		}
+		assert.NoError(t, err)
 	}()
 
 	return "http://" + listener.Addr().String()
@@ -99,16 +95,15 @@ func emulateInflux() string {
 func TestBasicParallel(t *testing.T) {
 	s, err := NewServer(Config{
 		TLSProxy:       true,
-		InfluxAddress:  emulateInflux(),
+		InfluxAddress:  emulateInflux(t),
 		InfluxHost:     "Max Mustermann",
 		InfluxUsername: "foo",
 		InfluxPassword: "bar",
 		GinMode:        gin.TestMode,
 		Debug:          true,
+		GZIPExtension:  true,
 	})
-	if err != nil {
-		panic(err)
-	}
+	assert.NoError(t, err)
 
 	t.Run("basicTests", func(t *testing.T) {
 		t.Run("header", s.headerTest)
@@ -238,9 +233,7 @@ func TestNoInfluxConnection(t *testing.T) {
 		InfluxHost:    "Max Mustermann",
 		GinMode:       gin.TestMode,
 	})
-	if err != nil {
-		panic(err)
-	}
+	assert.NoError(t, err)
 	for _, dimension := range svgDimensions {
 		path := fmt.Sprintf("/status-%dx%d.svg", dimension[0], dimension[1])
 		w := httptest.NewRecorder()
@@ -259,9 +252,7 @@ func TestNoDebugCSS(t *testing.T) {
 		GinMode:       gin.TestMode,
 		Debug:         false,
 	})
-	if err != nil {
-		panic(err)
-	}
+	assert.NoError(t, err)
 	w := httptest.NewRecorder()
 	req, _ := http.NewRequest("GET", "/", nil)
 	s.Router.ServeHTTP(w, req)
@@ -299,9 +290,7 @@ func TestWrongHost(t *testing.T) {
 		GinMode:       gin.TestMode,
 		Debug:         true,
 	})
-	if err != nil {
-		panic(err)
-	}
+	assert.NoError(t, err)
 	w := httptest.NewRecorder()
 	req, _ := http.NewRequest("GET", "/", nil)
 	s.Router.ServeHTTP(w, req)
