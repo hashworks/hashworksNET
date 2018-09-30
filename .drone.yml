@@ -4,7 +4,7 @@ pipeline:
     pull: true
     commands:
       - apt update && apt install -y --no-install-recommends sassc go-bindata
-      - make build
+      - make deploy
       - go test --covermode=atomic --coverprofile=coverage.out ./server
 
   coverage:
