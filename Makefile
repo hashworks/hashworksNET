@@ -10,8 +10,7 @@ SASS_SOURCE=sass/main.scss
 SASS_FLAGS=-t compressed
 SASS_FLAGS_DEBUG=-t nested -l
 
-VERSION := $(shell git tag | tail -1)
-COMMIT  := $(shell git rev-parse --short HEAD 2>/dev/null)
+VERSION := $(shell git describe --tags)
 DATE    := $(shell date --iso-8601=seconds)
 
 build: GIN_MODE=debug
@@ -53,4 +52,4 @@ server/bindata/bindata.go: $(BINDATA_DATA)
 
 bin/hashworksNET: $(BINARY_PRE)
 	mkdir -p bin
-	CGO_ENABLED=$(CGO_ENABLED) go build -ldflags '-X main.VERSION=$(VERSION) -X main.BUILD_COMMIT=$(COMMIT) -X main.BUILD_DATE=$(DATE) -X main.GIN_MODE=$(GIN_MODE)' -o bin/hashworksNET $(BINARY_SOURCE)
+	CGO_ENABLED=$(CGO_ENABLED) go build -ldflags '-X main.VERSION=$(VERSION) -X main.BUILD_DATE=$(DATE) -X main.GIN_MODE=$(GIN_MODE)' -o bin/hashworksNET $(BINARY_SOURCE)

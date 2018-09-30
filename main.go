@@ -11,10 +11,9 @@ import (
 
 var (
 	// Set the following uppercase three with -ldflags "-X main.VERSION=v1.2.3 [...]"
-	VERSION      string = "?.?.?"
-	BUILD_COMMIT string = "unknown commit"
-	BUILD_DATE   string = "unknown date"
-	GIN_MODE     string = gin.DebugMode
+	VERSION    string = "?.?.?"
+	BUILD_DATE string = "unknown date"
+	GIN_MODE   string = gin.DebugMode
 )
 
 func main() {
@@ -22,7 +21,7 @@ func main() {
 	app.Name = "hashworksNET"
 	app.Description = "The server of hashworks.net"
 	app.UsageText = "hashworksNET [global options]"
-	app.Version = fmt.Sprintf("%s (%s, %s)", VERSION, BUILD_COMMIT, BUILD_DATE)
+	app.Version = fmt.Sprintf("%s (%s)", VERSION, BUILD_DATE)
 	app.Copyright = "GNU General Public License v3.0"
 
 	config := server.Config{GinMode: GIN_MODE, Version: VERSION}
