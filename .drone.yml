@@ -16,8 +16,8 @@ pipeline:
     environment:
       - CGO_ENABLED=0
     commands:
-      - apt update && apt install -y --no-install-recommends go-bindata
-      - go generate --run "go-bindata"
+      - go get -u github.com/UnnoTed/fileb0x
+      - go generate --run "fileb0x"
       - go build -ldflags "-X main.VERSION=$(git describe --tags) -X main.BUILD_DATE=$(date --iso-8601=seconds) -X main.GIN_MODE=release" -o bin/hashworksNET *.go
       - go test --covermode=atomic --coverprofile=coverage.out ./server
       - ./bin/hashworksNET --version

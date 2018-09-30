@@ -1,5 +1,5 @@
 //go:generate sassc -t compressed sass/main.scss sass/main.css
-//go:generate go-bindata -pkg bindata -o server/bindata/bindata.go sass/main.css static templates img
+//go:generate fileb0x b0x.yaml
 package main
 
 import (

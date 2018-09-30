@@ -1,0 +1,10 @@
+pkg: bindata
+fmt: true
+dest: "./server/bindata/"
+
+custom:
+  - files:
+    - "./img"
+    - "./static"
+    - "./templates"
+    - "./sass/main.css"

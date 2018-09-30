@@ -112,6 +112,7 @@ func TestBasicParallel(t *testing.T) {
 		t.Run("redirect", s.redirectTest)
 		t.Run("images", s.imagesTest)
 		t.Run("statics", s.staticsTest)
+		t.Run("notFound", s.notFoundTest)
 		t.Run("robots", s.robotsTest)
 	})
 }
@@ -198,6 +199,14 @@ func (s *Server) staticsTest(t *testing.T) {
 	assert.Equal(t, "application/octet-stream", w.Header().Get("Content-Type"))
 	assert.Equal(t, "binary", w.Header().Get("Content-Transfer-Encoding"))
 	assert.NotEmpty(t, w.Body)
+}
+
+func (s *Server) notFoundTest(t *testing.T) {
+	w := httptest.NewRecorder()
+	req, _ := http.NewRequest("GET", "/static/notExistingFile", nil)
+	s.Router.ServeHTTP(w, req)
+
+	assert.Equal(t, 404, w.Code)
 }
 
 func (s *Server) robotsTest(t *testing.T) {

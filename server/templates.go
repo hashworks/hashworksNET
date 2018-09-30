@@ -10,18 +10,14 @@ import (
 func (s Server) templateFunctionMap() template.FuncMap {
 	return template.FuncMap{
 		"css": func() template.CSS {
-			if !s.config.Debug {
-				return s.css
-			} else { // On debug mode we normally don't include the CSS in our binary. This means we can edit it live
-				return template.CSS(bindata.MustAsset("sass/main.css"))
-			}
+			return s.css
 		},
 	}
 }
 
 func (s Server) loadTemplates() {
 	// Load template file names from Asset
-	templateNames, err := bindata.AssetDir("templates")
+	templateNames, err := bindata.WalkDirs("templates", false)
 	if err != nil {
 		panic(err)
 	}
@@ -33,10 +29,16 @@ func (s Server) loadTemplates() {
 	// Iterate trough template files, load them into multitemplate
 	multiT := multitemplate.New()
 	for _, templateName := range templateNames {
-		index := strings.Index(templateName, ".")
-		basename := templateName[:index]
+		index := strings.Index(templateName, "/")
+		basename := templateName[index+1:]
+		index = strings.Index(basename, ".")
+		basename = basename[:index]
 		tmpl := tmpl.New(basename)
-		tmpl, err := tmpl.Parse(string(bindata.MustAsset("templates/" + templateName)))
+		data, err := bindata.ReadFile(templateName)
+		if err != nil {
+			panic(err)
+		}
+		tmpl, err = tmpl.Parse(string(data))
 		if err != nil {
 			panic(err)
 		}

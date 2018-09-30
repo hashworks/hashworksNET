@@ -10,9 +10,6 @@ import (
 	"regexp"
 	"time"
 
-	// gin/logger.go might report undefined: isatty.IsCygwinTerminal
-	// Fix: go get -u github.com/mattn/go-isatty
-	"github.com/elazarl/go-bindata-assetfs"
 	"github.com/gin-contrib/cache/persistence"
 	"github.com/gin-contrib/gzip"
 	"github.com/gin-gonic/gin"
@@ -49,7 +46,7 @@ func NewServer(config Config) (Server, error) {
 	}
 	gin.SetMode(config.GinMode)
 
-	cssBytes := bindata.MustAsset("sass/main.css")
+	cssBytes := bindata.FileSassMainCSS
 	cssSha256 := sha256.Sum256(cssBytes)
 
 	s := Server{
@@ -70,8 +67,8 @@ func NewServer(config Config) (Server, error) {
 
 	s.loadTemplates()
 
-	s.Router.StaticFS("/static", &assetfs.AssetFS{Asset: bindata.Asset, AssetDir: bindata.AssetDir, AssetInfo: bindata.AssetInfo, Prefix: "static"})
-	s.Router.StaticFS("/img", &assetfs.AssetFS{Asset: bindata.Asset, AssetDir: bindata.AssetDir, AssetInfo: bindata.AssetInfo, Prefix: "img"})
+	s.Router.StaticFS("/static", &prefixHTTPFS{prefix: "static"})
+	s.Router.StaticFS("/img", &prefixHTTPFS{prefix: "img"})
 
 	s.Router.GET("/robots.txt", func(c *gin.Context) {
 		c.String(http.StatusOK, "User-agent: *\nDisallow: /status\nDisallow: /status-*.svg")
