@@ -1,11 +1,6 @@
 ---
 - hosts: hive.hashworks.net
   tasks:
-  - name: Stop systemd service
-    systemd:
-      name: hashworksNET
-      state: stopped
-
   - name: Copy systemd unit file
     copy:
       src: ../systemd/hashworksNET.service
@@ -22,8 +17,8 @@
       group: root
       mode: 0775
 
-  - name: Start systemd service
+  - name: Restart systemd service
     systemd:
       name: hashworksNET
       daemon_reload: true
-      state: started
+      state: restarted
