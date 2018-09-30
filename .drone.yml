@@ -1,11 +1,26 @@
+clone:
+  git:
+    image: plugins/git
+    tags: true
+
 pipeline:
+  sass:
+    image: codycraven/sassc
+    pull: true
+    commands:
+      - sassc -t compressed sass/main.scss sass/main.css
+
   build:
     image: golang
     pull: true
+    environment:
+      - CGO_ENABLED=0
     commands:
-      - apt update && apt install -y --no-install-recommends sassc go-bindata
-      - make deploy
+      - apt update && apt install -y --no-install-recommends go-bindata
+      - go generate --run "go-bindata"
+      - go build -ldflags "-X main.VERSION=$(git describe --tags) -X main.BUILD_DATE=$(date --iso-8601=seconds) -X main.GIN_MODE=release" -o bin/hashworksNET *.go
       - go test --covermode=atomic --coverprofile=coverage.out ./server
+      - ./bin/hashworksNET --version
 
   coverage:
     image: golang

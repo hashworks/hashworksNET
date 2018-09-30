@@ -1,4 +1,5 @@
-//go:generate make generate
+//go:generate sassc -t compressed sass/main.scss sass/main.css
+//go:generate go-bindata -pkg bindata -o server/bindata/bindata.go sass/main.css static templates img
 package main
 
 import (

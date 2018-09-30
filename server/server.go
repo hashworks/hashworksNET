@@ -49,7 +49,7 @@ func NewServer(config Config) (Server, error) {
 	}
 	gin.SetMode(config.GinMode)
 
-	cssBytes := bindata.MustAsset("css/main.css")
+	cssBytes := bindata.MustAsset("sass/main.css")
 	cssSha256 := sha256.Sum256(cssBytes)
 
 	s := Server{

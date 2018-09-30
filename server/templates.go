@@ -13,7 +13,7 @@ func (s Server) templateFunctionMap() template.FuncMap {
 			if !s.config.Debug {
 				return s.css
 			} else { // On debug mode we normally don't include the CSS in our binary. This means we can edit it live
-				return template.CSS(bindata.MustAsset("css/main.css"))
+				return template.CSS(bindata.MustAsset("sass/main.css"))
 			}
 		},
 	}
