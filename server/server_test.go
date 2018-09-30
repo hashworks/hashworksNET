@@ -7,8 +7,6 @@ import (
 	"net"
 	"net/http"
 	"net/http/httptest"
-	"os"
-	"path/filepath"
 	"strings"
 	"testing"
 )
@@ -178,26 +176,10 @@ func (s *Server) redirectTest(t *testing.T) {
 	assert.Equal(t, "/img/favicon.ico", w.Header().Get("Location"))
 }
 
-func getFiles(path string) []string {
-	var fileList []string
-	err := filepath.Walk(path, func(path string, f os.FileInfo, err error) error {
-		if stat, err := os.Stat(path); err == nil && !stat.IsDir() {
-			fileList = append(fileList, path)
-		}
-		return nil
-	})
-	if err != nil {
-		panic(err)
-	}
-	return fileList
-}
-
 func (s *Server) imagesTest(t *testing.T) {
-	fileList := getFiles("img")
-
-	for _, image := range fileList {
+	for _, image := range []string{"favicon.ico", "favicon-16x16.png", "favicon-32x32.png", "favicon-96x96.png", "favicon-194x194.png"} {
 		w := httptest.NewRecorder()
-		req, _ := http.NewRequest("GET", "/"+image, nil)
+		req, _ := http.NewRequest("GET", "/img/"+image, nil)
 		s.Router.ServeHTTP(w, req)
 
 		assert.Equal(t, 200, w.Code)
@@ -206,16 +188,16 @@ func (s *Server) imagesTest(t *testing.T) {
 }
 
 func (s *Server) staticsTest(t *testing.T) {
-	fileList := getFiles("static")
+	w := httptest.NewRecorder()
+	req, _ := http.NewRequest("GET", "/static/pgp_public_key.asc", nil)
+	s.Router.ServeHTTP(w, req)
 
-	for _, static := range fileList {
-		w := httptest.NewRecorder()
-		req, _ := http.NewRequest("GET", "/"+static, nil)
-		s.Router.ServeHTTP(w, req)
-
-		assert.Equal(t, 200, w.Code)
-		assert.NotEmpty(t, w.Body)
-	}
+	assert.Equal(t, 200, w.Code)
+	assert.Equal(t, "File Transfer", w.Header().Get("Content-Description"))
+	assert.Equal(t, "attachment", w.Header().Get("Content-Disposition"))
+	assert.Equal(t, "application/octet-stream", w.Header().Get("Content-Type"))
+	assert.Equal(t, "binary", w.Header().Get("Content-Transfer-Encoding"))
+	assert.NotEmpty(t, w.Body)
 }
 
 func (s *Server) robotsTest(t *testing.T) {
