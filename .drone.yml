@@ -1,0 +1,41 @@
+pipeline:
+  build:
+    image: golang
+    pull: true
+    commands:
+      - apt update && apt install -y --no-install-recommends sassc go-bindata
+      - make build
+      - go test --covermode=atomic --coverprofile=coverage.out ./server
+
+  coverage:
+    image: golang
+    pull: true
+    commands:
+    - go tool cover --html=coverage.out -o=coverage.html
+    - echo "Coverage report:" "$FILEBIN_BASE"/"$(curl -s "$FILEBIN_BASE"/api/v2.1.1/file/upload -F apikey="$FILEBIN_APIKEY" -F "file=@coverage.html" | cut -d \" -f 10)"
+    secrets: [ filebin_base, filebin_apikey ]
+    when:
+      event: push
+
+  deploy:
+    image: rics3n/drone-ansible:2
+    inventory: hive
+    inventory_path: deployment/inventories
+    playbook: deployment/staging.yml
+    secrets: [ ssh_key ]
+    when:
+      branch: master
+      event: [push, tag, deployment]
+
+  telegram:
+    image: appleboy/drone-telegram
+    pull: true
+    format: markdown
+    secrets: [telegram_to, telegram_token]
+    when:
+      event: [push, tag, deployment]
+      status: [ changed, failure ]
+    message: >
+      *Build of {{repo.name}}/{{commit.branch}} {{#success build.status}}*[succeeded]({{build.link}}) 💪{{else}}*[failed]({{build.link}}) 👎{{/success}}
+
+      {{build.event}} from {{commit.author}}: [{{commit.message}}]({{commit.link}})
