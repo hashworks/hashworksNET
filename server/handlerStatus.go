@@ -37,7 +37,7 @@ func (s *Server) handlerStatusSVG(width, height int) func(*gin.Context) {
 		defer httpClient.Close()
 
 		if err != nil {
-			s.recoveryHandler(c, err)
+			s.recoveryHandlerStatus(http.StatusBadGateway, c, err)
 			return
 		}
 
@@ -54,8 +54,8 @@ func (s *Server) handlerStatusSVG(width, height int) func(*gin.Context) {
 			return
 		}
 
-		if len(resp.Results) == 0 || len(resp.Results[0].Series) == 0 || len(resp.Results[0].Series[0].Values) == 0 {
-			s.recoveryHandler(c, errors.New("InfluxDB returned an empty result"))
+		if len(resp.Results) == 0 || len(resp.Results[0].Series) == 0 || len(resp.Results[0].Series[0].Values) < 2 {
+			s.recoveryHandlerStatus(http.StatusServiceUnavailable, c, errors.New("InfluxDB didn't return enough data"))
 			return
 		}
 
@@ -135,7 +135,7 @@ func (s *Server) handlerStatusSVG(width, height int) func(*gin.Context) {
 		c.Header("Content-Security-Policy", s.getCSP(false)) // Our SVGs require inline CSS
 
 		if err := graph.Render(chart.SVG, c.Writer); err != nil {
-			s.recoveryHandler(c, err)
+			c.AbortWithStatus(500)
 			return
 		}
 
