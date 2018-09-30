@@ -7,8 +7,6 @@ import (
 	"fmt"
 	"github.com/ekyoung/gin-nice-recovery"
 	"github.com/hashworks/hashworksNET/server/bindata"
-	"os"
-	"path"
 	"regexp"
 	"time"
 
@@ -107,9 +105,6 @@ func NewServer(config Config) (Server, error) {
 func testConfig(c *Config) error {
 	var re = regexp.MustCompile(`^http(?:s)?:\/\/[\S^:]+(?::[0-9]+)?(?:\S+)?$`)
 
-	if c.CacheDir == "" {
-		c.CacheDir = GetDefaultCacheDir()
-	}
 	if c.InfluxHost == "" {
 		return errors.New("Influx host cannot be empty.")
 	}
@@ -121,11 +116,4 @@ func testConfig(c *Config) error {
 		}
 	}
 	return nil
-}
-
-func GetDefaultCacheDir() string {
-	if userCacheDir, err := os.UserCacheDir(); err == nil {
-		return path.Join(userCacheDir, "hashworksNET")
-	}
-	return "cache"
 }

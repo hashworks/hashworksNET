@@ -30,7 +30,6 @@ func main() {
 	flagSet.IntVar(&port, "port", 65432, "The port to listen on.")
 	flagSet.BoolVar(&config.TLSProxy, "tlsProxy", false, "Set this if the service is behind a TLS proxy.")
 	flagSet.BoolVar(&config.GZIPExtension, "gzip", false, "Enabled the gzip extension.")
-	flagSet.StringVar(&config.CacheDir, "cacheDir", server.GetDefaultCacheDir(), "Cache directory, f.e. for certificates.")
 	flagSet.StringVar(&config.Domain, "domain", "", "The domain the service is reachable at.")
 	flagSet.StringVar(&config.EMail, "email", "mail@hashworks.net", "The EMail the host is reachable at.")
 	flagSet.StringVar(&config.RedditURL, "reddit", "https://www.reddit.com/user/hashworks/posts/", "URL to the Reddit profile of the host.")
