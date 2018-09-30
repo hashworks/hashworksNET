@@ -18,6 +18,8 @@ run: build
 distribute: build
 	./distribute.sh
 
+generate: $(BINARY_PRE)
+
 clean:
 	rm -Rf ./bin ./css ./server/bindata.go
 
