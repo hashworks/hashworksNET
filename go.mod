@@ -11,7 +11,7 @@ require (
 	github.com/gin-contrib/multitemplate v0.0.0-20180827023943-5799bbbb6dce
 	github.com/gin-contrib/sse v0.0.0-20170109093832-22d885f9ecc7 // indirect
 	github.com/gin-gonic/gin v1.3.0
-	github.com/go-errors/errors v1.0.1 // indirect
+	github.com/go-errors/errors v1.0.1
 	github.com/golang/freetype v0.0.0-20170609003504-e2365dfdc4a0 // indirect
 	github.com/golang/protobuf v1.2.0 // indirect
 	github.com/gomodule/redigo v2.0.0+incompatible // indirect

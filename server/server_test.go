@@ -7,11 +7,22 @@ import (
 	"net"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"strings"
 	"testing"
 )
 
-func emulateInflux(t *testing.T) string {
+var influxAddressData,
+	influxAddressNotEnoughData,
+	influxAddressNoData,
+	influxAddressUnauthorized string
+
+func TestMain(m *testing.M) {
+	emulateInflux()
+	os.Exit(m.Run())
+}
+
+func emulateInflux() {
 	http.HandleFunc("/query", func(w http.ResponseWriter, _ *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
@@ -79,21 +90,74 @@ func emulateInflux(t *testing.T) string {
    ]
 }`))
 	})
+	http.HandleFunc("/notEnoughData/query", func(w http.ResponseWriter, _ *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte(`
+{
+   "results" : [
+      {
+         "statement_id" : 0,
+         "series" : [
+            {
+               "name" : "bpm",
+               "values" : [
+                  [
+                     1537844700,
+                     85
+                  ]
+               ],
+               "columns" : [
+                  "time",
+                  "mean"
+               ]
+            }
+         ]
+      }
+   ]
+}`))
+	})
+	http.HandleFunc("/noData/query", func(w http.ResponseWriter, _ *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte(`
+{
+   "results" : [
+      {
+         "statement_id" : 0,
+         "series" : [
+            
+         ]
+      }
+   ]
+}`))
+	})
+	http.HandleFunc("/unauthorized/query", func(w http.ResponseWriter, _ *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusUnauthorized)
+	})
 
 	listener, err := net.Listen("tcp", "127.0.0.1:0")
-	assert.NoError(t, err)
+	if err != nil {
+		panic(err)
+	}
 	go func() {
 		err := http.Serve(listener, nil)
-		assert.NoError(t, err)
+		if err != nil {
+			panic(err)
+		}
 	}()
 
-	return "http://" + listener.Addr().String()
+	influxAddressData = "http://" + listener.Addr().String()
+	influxAddressNotEnoughData = influxAddressData + "/notEnoughData"
+	influxAddressNoData = influxAddressData + "/noData"
+	influxAddressUnauthorized = influxAddressData + "/unauthorized"
 }
 
 func TestBasicParallel(t *testing.T) {
 	s, err := NewServer(Config{
 		TLSProxy:       true,
-		InfluxAddress:  emulateInflux(t),
+		InfluxAddress:  influxAddressData,
 		InfluxHost:     "Max Mustermann",
 		InfluxUsername: "foo",
 		InfluxPassword: "bar",
@@ -221,6 +285,63 @@ func (s *Server) robotsTest(t *testing.T) {
 func TestNoInfluxConnection(t *testing.T) {
 	s, err := NewServer(Config{
 		InfluxAddress: "http://127.0.0.1:1",
+		InfluxHost:    "Max Mustermann",
+		GinMode:       gin.TestMode,
+	})
+	assert.NoError(t, err)
+	for _, dimension := range svgDimensions {
+		path := fmt.Sprintf("/status-%dx%d.svg", dimension[0], dimension[1])
+		w := httptest.NewRecorder()
+		req, _ := http.NewRequest("GET", path, nil)
+		s.Router.ServeHTTP(w, req)
+
+		assert.Equal(t, http.StatusBadGateway, w.Code)
+		assert.Contains(t, w.Body.String(), "mail@hashworks.net")
+	}
+}
+
+func TestInfluxNotEnoughData(t *testing.T) {
+	s, err := NewServer(Config{
+		InfluxAddress: influxAddressNotEnoughData,
+		InfluxHost:    "Max Mustermann",
+		GinMode:       gin.TestMode,
+	})
+	assert.NoError(t, err)
+	for _, dimension := range svgDimensions {
+		path := fmt.Sprintf("/status-%dx%d.svg", dimension[0], dimension[1])
+		w := httptest.NewRecorder()
+		req, _ := http.NewRequest("GET", path, nil)
+		s.Router.ServeHTTP(w, req)
+
+		assert.Equal(t, http.StatusOK, w.Code)
+		assert.Equal(t, "image/svg+xml", w.Header().Get("Content-Type"))
+		assert.True(t, strings.HasPrefix(w.Body.String(), "<svg xmlns"))
+		assert.True(t, strings.HasSuffix(w.Body.String(), "</svg>"))
+		assert.Contains(t, w.Body.String(), "heart-rate")
+	}
+}
+
+func TestInfluxNoData(t *testing.T) {
+	s, err := NewServer(Config{
+		InfluxAddress: influxAddressNoData,
+		InfluxHost:    "Max Mustermann",
+		GinMode:       gin.TestMode,
+	})
+	assert.NoError(t, err)
+	for _, dimension := range svgDimensions {
+		path := fmt.Sprintf("/status-%dx%d.svg", dimension[0], dimension[1])
+		w := httptest.NewRecorder()
+		req, _ := http.NewRequest("GET", path, nil)
+		s.Router.ServeHTTP(w, req)
+
+		assert.Equal(t, http.StatusInternalServerError, w.Code)
+		assert.Contains(t, w.Body.String(), "mail@hashworks.net")
+	}
+}
+
+func TestInfluxUnauthorized(t *testing.T) {
+	s, err := NewServer(Config{
+		InfluxAddress: influxAddressUnauthorized,
 		InfluxHost:    "Max Mustermann",
 		GinMode:       gin.TestMode,
 	})

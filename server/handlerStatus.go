@@ -2,13 +2,15 @@ package server
 
 import (
 	"encoding/json"
-	"errors"
+	"fmt"
 	"github.com/gin-gonic/gin"
+	"github.com/go-errors/errors"
 	"github.com/influxdata/influxdb/client/v2"
 	"github.com/wcharczuk/go-chart"
 	"github.com/wcharczuk/go-chart/drawing"
 	"log"
 	"net/http"
+	"strings"
 	"time"
 )
 
@@ -54,8 +56,13 @@ func (s *Server) handlerStatusSVG(width, height int) func(*gin.Context) {
 			return
 		}
 
-		if len(resp.Results) == 0 || len(resp.Results[0].Series) == 0 || len(resp.Results[0].Series[0].Values) < 2 {
-			s.recoveryHandlerStatus(http.StatusServiceUnavailable, c, errors.New("InfluxDB didn't return enough data"))
+		if len(resp.Results) == 0 || len(resp.Results[0].Series) == 0 {
+			s.recoveryHandlerStatus(http.StatusInternalServerError, c, errors.New("InfluxDB query failed."))
+			return
+		}
+
+		if len(resp.Results[0].Series[0].Values) < 2 {
+			messageSVG(c, "Not enough heart-rate data collected in the last 12h to draw a graph.", width)
 			return
 		}
 
@@ -141,6 +148,43 @@ func (s *Server) handlerStatusSVG(width, height int) func(*gin.Context) {
 
 		c.Status(200)
 	}
+}
+
+func messageSVG(c *gin.Context, message string, width int) {
+	var messages []string
+	width += 100
+	charactersPerLine := width / 15
+	if len(message) <= charactersPerLine {
+		messages = append(messages, `<tspan x="0" dy="30">`+strings.TrimSpace(message)+`</tspan>`)
+	} else {
+		words := strings.Fields(strings.TrimSpace(message))
+		charactersLeft := charactersPerLine
+		line := ""
+		for _, word := range words {
+			wordLength := len(word)
+			if charactersLeft > 0 && (wordLength <= charactersLeft || wordLength > charactersPerLine) {
+				line += word + " "
+				charactersLeft -= wordLength
+			} else {
+				messages = append(messages, `<tspan x="0" dy="30">`+strings.TrimSpace(line)+`</tspan>`)
+				line = word + " "
+				charactersLeft = charactersPerLine - wordLength
+			}
+		}
+		line = strings.TrimSpace(line)
+		if line != "" {
+			messages = append(messages, `<tspan x="0" dy="30">`+line+`</tspan>`)
+		}
+	}
+	width += 10
+	height := len(messages)*30 + 20
+
+	c.Header("Content-Type", "image/svg+xml")
+	c.Header("Cache-Control", "no-store")
+	c.String(200, fmt.Sprintf(`<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="%d" height="%d">`+
+		`<rect width="100%%" height="100%%" fill="#272727"/>`+
+		`<text x="0" y="0" fill="white" font-size="24" font-family="sans-serif">%s</text>`+
+		`</svg>`, width, height, strings.Join(messages, "")))
 }
 
 func (s *Server) handlerStatus(c *gin.Context) {
