@@ -6,13 +6,15 @@ ConditionFileIsExecutable=/usr/local/bin/hashworksNET
 EnvironmentFile=/etc/hashworksNET/server.conf
 ExecStart=/usr/local/bin/hashworksNET
 
-User=http
-Group=http
+DynamicUser=true
+# implies:
+# ProtectSystem=strict
+# ProtectHome=read-only
+# RemoveIPC=
+# PrivateTmp=yes
 
-NoNewPrivileges=yes
-PrivateTmp=yes
 PrivateDevices=yes
-ProtectSystem=strict
+NoNewPrivileges=yes
 ProtectControlGroups=yes
 ProtectKernelTunables=yes
 ProtectKernelModules=yes
