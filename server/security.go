@@ -62,9 +62,10 @@ func (s Server) getSecureOptions() secure.Options {
 
 func (s Server) getCSP(safeCSS bool) string {
 	styleSrc := "'unsafe-inline'"
-	if safeCSS {
-		styleSrc = fmt.Sprintf("'sha256-%s'", s.cssSha256)
-	}
+	// Until https://github.com/wcharczuk/go-chart/pull/103 is merged
+	//if safeCSS {
+	//	styleSrc = fmt.Sprintf("'sha256-%s'", s.cssSha256)
+	//}
 	upgradeInSecureRequests := ""
 	if s.config.TLSProxy {
 		upgradeInSecureRequests = "upgrade-insecure-requests; "
