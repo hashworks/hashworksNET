@@ -12,6 +12,12 @@ func (s Server) templateFunctionMap() template.FuncMap {
 		"css": func() template.CSS {
 			return s.css
 		},
+		"version": func() string {
+			return s.config.Version
+		},
+		"buildDate": func() string {
+			return s.config.BuildDate
+		},
 	}
 }
 

@@ -25,7 +25,7 @@ func main() {
 	app.Version = fmt.Sprintf("%s (%s)", VERSION, BUILD_DATE)
 	app.Copyright = "GNU General Public License v3.0"
 
-	config := server.Config{GinMode: GIN_MODE, Version: VERSION}
+	config := server.Config{GinMode: GIN_MODE, Version: VERSION, BuildDate: BUILD_DATE}
 
 	app.Flags = []cli.Flag{
 		cli.BoolFlag{

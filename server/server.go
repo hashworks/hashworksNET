@@ -28,6 +28,7 @@ type Server struct {
 
 type Config struct {
 	Version        string
+	BuildDate      string
 	GinMode        string
 	TLSProxy       bool
 	GZIPExtension  bool
