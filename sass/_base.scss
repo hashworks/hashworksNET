@@ -40,11 +40,11 @@ header {
   z-index: 5;
 
   .title,
-  nav.menu .entry {
-    padding: $header-height/3.5 $header-height/3.5 0;
+  .menu .entry {
+    padding: $header-height / 3.5 $header-height / 3.5 0;
   }
 
-  nav.menu {
+  .menu {
     display: flex;
     position: relative;
 
@@ -70,10 +70,10 @@ header {
     }
   }
 
-  nav.icons {
+  .icons {
     position: absolute;
-    right: $header-height/3.5;
-    top: $header-height/3.5;
+    right: $header-height / 3.5;
+    top: $header-height / 3.5;
 
     .icon {
       opacity: .6;
@@ -96,13 +96,13 @@ header {
   }
 }
 
-section.cards {
+.cards {
   display: flex;
   flex-flow: row wrap;
   margin-left: -$content-spacing;
   margin-top: -$content-spacing;
 
-  article.card {
+  .card {
     background-color: $bg-color2;
     box-shadow: -5px 5px 5px 0 $shadow-color;
     flex-grow: 1;
@@ -112,11 +112,11 @@ section.cards {
     padding: $content-spacing;
     width: 440px;
 
-    .tag {
-      float: right;
-      margin-right: 10px;
-      margin-top: 3px;
-    }
+    //.tag {
+    //  float: right;
+    //  margin-right: 10px;
+    //  margin-top: 3px;
+    //}
 
     &.full {
       flex-grow: 2;
