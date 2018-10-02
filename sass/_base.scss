@@ -4,7 +4,6 @@ body {
   background-color: $bg-color1;
   color: $fg-color-normal;
   font-family: sans-serif;
-  -webkit-tap-highlight-color: rgba(0, 0, 0, 0);
 }
 
 a {
@@ -29,7 +28,7 @@ svg {
   }
 }
 
-.header {
+header {
   background-color: $bg-color3;
   box-shadow: 0 5px 5px 0 $shadow-color;
   font-size: 1.3em;
@@ -41,21 +40,11 @@ svg {
   z-index: 5;
 
   .title,
-  .menu .entry {
+  nav.menu .entry {
     padding: $header-height/3.5 $header-height/3.5 0;
   }
 
-  .title {
-    padding-right: 30px;
-  }
-
-  @media (max-width: $small-screen-max-width) {
-    .menu {
-      min-width: 100%;
-    }
-  }
-
-  .menu {
+  nav.menu {
     display: flex;
     position: relative;
 
@@ -76,17 +65,12 @@ svg {
       opacity: 1;
     }
 
-    .menu-border {
-      $border-height: 3px;
-      background-color: $fg-color-normal;
-      height: $border-height;
-      left: 0;
-      position: absolute;
-      top: $header-height - $border-height;
+    @media (max-width: $small-screen-max-width) {
+      min-width: 100%;
     }
   }
 
-  .icons {
+  nav.icons {
     position: absolute;
     right: $header-height/3.5;
     top: $header-height/3.5;
@@ -112,13 +96,13 @@ svg {
   }
 }
 
-.cards {
+section.cards {
   display: flex;
   flex-flow: row wrap;
   margin-left: -$content-spacing;
   margin-top: -$content-spacing;
 
-  .card {
+  article.card {
     background-color: $bg-color2;
     box-shadow: -5px 5px 5px 0 $shadow-color;
     flex-grow: 1;
