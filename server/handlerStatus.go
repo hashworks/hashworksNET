@@ -56,12 +56,12 @@ func (s *Server) handlerStatusSVG(width, height int) func(*gin.Context) {
 			return
 		}
 
-		if len(resp.Results) == 0 || len(resp.Results[0].Series) == 0 {
+		if len(resp.Results) == 0 {
 			s.recoveryHandlerStatus(http.StatusInternalServerError, c, errors.New("InfluxDB query failed."))
 			return
 		}
 
-		if len(resp.Results[0].Series[0].Values) < 2 {
+		if len(resp.Results[0].Series) == 0 || len(resp.Results[0].Series[0].Values) < 2 {
 			messageSVG(c, "Not enough heart-rate data collected in the last 12h to draw a graph.", width)
 			return
 		}

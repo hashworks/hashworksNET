@@ -15,6 +15,7 @@ import (
 var influxAddressData,
 	influxAddressNotEnoughData,
 	influxAddressNoData,
+	influxAddressFailure,
 	influxAddressUnauthorized string
 
 func TestMain(m *testing.M) {
@@ -117,6 +118,14 @@ func emulateInflux() {
    ]
 }`))
 	})
+	http.HandleFunc("/failure/query", func(w http.ResponseWriter, _ *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte(`
+{
+   "results" : []
+}`))
+	})
 	http.HandleFunc("/noData/query", func(w http.ResponseWriter, _ *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
@@ -124,10 +133,7 @@ func emulateInflux() {
 {
    "results" : [
       {
-         "statement_id" : 0,
-         "series" : [
-            
-         ]
+         "statement_id" : 0
       }
    ]
 }`))
@@ -151,6 +157,7 @@ func emulateInflux() {
 	influxAddressData = "http://" + listener.Addr().String()
 	influxAddressNotEnoughData = influxAddressData + "/notEnoughData"
 	influxAddressNoData = influxAddressData + "/noData"
+	influxAddressFailure = influxAddressData + "/failure"
 	influxAddressUnauthorized = influxAddressData + "/unauthorized"
 }
 
@@ -324,6 +331,27 @@ func TestInfluxNotEnoughData(t *testing.T) {
 func TestInfluxNoData(t *testing.T) {
 	s, err := NewServer(Config{
 		InfluxAddress: influxAddressNoData,
+		InfluxHost:    "Max Mustermann",
+		GinMode:       gin.TestMode,
+	})
+	assert.NoError(t, err)
+	for _, dimension := range svgDimensions {
+		path := fmt.Sprintf("/status-%dx%d.svg", dimension[0], dimension[1])
+		w := httptest.NewRecorder()
+		req, _ := http.NewRequest("GET", path, nil)
+		s.Router.ServeHTTP(w, req)
+
+		assert.Equal(t, http.StatusOK, w.Code)
+		assert.Equal(t, "image/svg+xml", w.Header().Get("Content-Type"))
+		assert.True(t, strings.HasPrefix(w.Body.String(), "<svg xmlns"))
+		assert.True(t, strings.HasSuffix(w.Body.String(), "</svg>"))
+		assert.Contains(t, w.Body.String(), "Not enough")
+	}
+}
+
+func TestInfluxFailure(t *testing.T) {
+	s, err := NewServer(Config{
+		InfluxAddress: influxAddressFailure,
 		InfluxHost:    "Max Mustermann",
 		GinMode:       gin.TestMode,
 	})
