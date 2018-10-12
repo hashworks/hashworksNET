@@ -8,3 +8,4 @@ custom:
     - "./static"
     - "./templates"
     - "./sass/main.css"
+    - "./sass/chart.css"

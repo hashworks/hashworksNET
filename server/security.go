@@ -5,6 +5,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/unrolled/secure"
 	"net/http"
+	"strings"
 )
 
 func (s Server) getSecureMiddleware() *secure.Secure {
@@ -61,11 +62,13 @@ func (s Server) getSecureOptions() secure.Options {
 }
 
 func (s Server) getCSP(safeCSS bool) string {
-	styleSrc := "'unsafe-inline'"
-	// Until https://github.com/wcharczuk/go-chart/pull/103 is merged
-	//if safeCSS {
-	//	styleSrc = fmt.Sprintf("'sha256-%s'", s.cssSha256)
-	//}
+	var styleSrc string
+	if safeCSS {
+		styleSrc = "'sha256-" + strings.Join(s.cssSha256, "' 'sha256-") + "'"
+		fmt.Println(styleSrc)
+	} else {
+		styleSrc = "'unsafe-inline'"
+	}
 	upgradeInSecureRequests := ""
 	if s.config.TLSProxy {
 		upgradeInSecureRequests = "upgrade-insecure-requests; "

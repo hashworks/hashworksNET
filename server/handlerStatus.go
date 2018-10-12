@@ -73,9 +73,9 @@ func (s *Server) handlerStatusSVG(width, height int) func(*gin.Context) {
 		timeSeries := chart.TimeSeries{
 			Name: "BPM",
 			Style: chart.Style{
-				Show:        true,
-				StrokeColor: drawing.ColorRed,
-				FillColor:   drawing.ColorRed.WithAlpha(64),
+				ClassName: "series",
+				Show:      true,
+				FillColor: drawing.ColorBlack, // Dummy-Fill so go-chart produces the fill-paths
 			},
 			XValues: []time.Time{},
 			YValues: []float64{},
@@ -101,28 +101,25 @@ func (s *Server) handlerStatusSVG(width, height int) func(*gin.Context) {
 			timeSeries.YValues = append(timeSeries.YValues, bpm)
 		}
 
-		backgroundColor := drawing.ColorFromHex("272727")
-		foregroundColor := drawing.ColorWhite
-
 		graph := chart.Chart{
 			Height: int(height),
 			Width:  int(width),
 			Background: chart.Style{
-				FillColor: backgroundColor,
+				ClassName: "background",
 			},
 			Canvas: chart.Style{
-				FillColor: backgroundColor,
+				ClassName: "canvas",
 			},
 			XAxis: chart.XAxis{
 				Style: chart.Style{
-					FontColor: foregroundColor,
+					ClassName: "xaxis",
 					Show:      true,
 				},
 				ValueFormatter: chart.TimeValueFormatterWithFormat("15:04"),
 			},
 			YAxis: chart.YAxis{
 				Style: chart.Style{
-					FontColor: foregroundColor,
+					ClassName: "yaxis",
 					Show:      true,
 				},
 				ValueFormatter: chart.IntValueFormatter,
@@ -132,16 +129,15 @@ func (s *Server) handlerStatusSVG(width, height int) func(*gin.Context) {
 
 		graph.Elements = []chart.Renderable{
 			chart.Legend(&graph, chart.Style{
-				FillColor: backgroundColor,
-				FontColor: foregroundColor,
+				ClassName: "legend",
 			}),
 		}
 
-		c.Header("Content-Type", "image/svg+xml")
+		c.Header("Content-Type", chart.ContentTypeSVG)
 		c.Header("Cache-Control", "max-age=600")
-		c.Header("Content-Security-Policy", s.getCSP(false)) // Our SVGs require inline CSS
 
-		if err := graph.Render(chart.SVG, c.Writer); err != nil {
+		if err := graph.Render(chart.SVGWithCSS(s.chartCSS, ""), c.Writer); err != nil {
+			log.Printf("%s - Error: %s", time.Now().Format(time.RFC3339), err.Error())
 			c.AbortWithStatus(500)
 			return
 		}

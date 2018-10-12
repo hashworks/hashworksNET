@@ -1,0 +1,60 @@
+@import 'configuration';
+
+svg {
+  font-family: sans-serif;
+}
+
+.background,
+.canvas {
+  fill: $bg-color-darker;
+  stroke: $fg-color-normal;
+  stroke-width: 0;
+}
+
+path.xaxis,
+path.yaxis {
+  fill: none;
+  stroke: $bg-color-lighter;
+  stroke-width: 1;
+}
+
+text.xaxis,
+text.yaxis {
+  fill: $fg-color-normal;
+  font-size: 12.8px;
+  stroke: none;
+  stroke-width: 0;
+}
+
+.series {
+  fill: none;
+  stroke: $chart-stroke;
+  stroke-width: 1;
+}
+
+path:nth-last-of-type(4).series {
+  fill: $chart-fill;
+  stroke: none;
+  stroke-width: 0;
+}
+
+text.legend {
+  fill: $fg-color-normal;
+  font-size: 10.2px;
+  stroke: none;
+  stroke-width: 0;
+}
+
+path.legend {
+  stroke-width: 1;
+}
+
+path:nth-last-of-type(1).legend {
+  fill: none;
+  stroke: $chart-stroke;
+}
+
+path:nth-last-of-type(2).legend {
+  fill: $bg-color-darker;
+  stroke: $bg-color-lighter;
+}

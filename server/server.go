@@ -22,7 +22,8 @@ type Server struct {
 	Router    *gin.Engine
 	store     *persistence.InMemoryStore
 	css       template.CSS
-	cssSha256 string
+	chartCSS  string
+	cssSha256 []string
 	config    Config
 }
 
@@ -50,12 +51,20 @@ func NewServer(config Config) (Server, error) {
 	cssBytes := bindata.FileSassMainCSS
 	cssSha256 := sha256.Sum256(cssBytes)
 
+	chartCSSBytes := bindata.FileSassChartCSS
+	chartCSSSha256 := sha256.Sum256(chartCSSBytes)
+
 	s := Server{
-		Router:    gin.Default(),
-		store:     persistence.NewInMemoryStore(time.Minute),
-		css:       template.CSS(cssBytes),
-		cssSha256: base64.StdEncoding.EncodeToString(cssSha256[:]),
-		config:    config,
+		Router:   gin.Default(),
+		store:    persistence.NewInMemoryStore(time.Minute),
+		css:      template.CSS(cssBytes),
+		chartCSS: string(chartCSSBytes),
+		config:   config,
+	}
+
+	s.cssSha256 = []string{
+		base64.StdEncoding.EncodeToString(cssSha256[:]),
+		base64.StdEncoding.EncodeToString(chartCSSSha256[:]),
 	}
 
 	s.Router.Use(nice.Recovery(s.recoveryHandler))

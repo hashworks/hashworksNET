@@ -1,4 +1,5 @@
 //go:generate sassc -p 0 -t compressed sass/main.scss sass/main.css
+//go:generate sassc -p 0 -t compressed sass/chart.scss sass/chart.css
 //go:generate fileb0x b0x.yaml
 package main
 

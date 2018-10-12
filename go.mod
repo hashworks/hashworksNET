@@ -28,7 +28,7 @@ require (
 	github.com/ugorji/go/codec v0.0.0-20180831062425-e253f1f20942 // indirect
 	github.com/unrolled/secure v0.0.0-20180914162101-439d7b25425f
 	github.com/urfave/cli v1.20.0
-	github.com/wcharczuk/go-chart v2.0.2-0.20180910201446-872b97b99f76+incompatible
+	github.com/wcharczuk/go-chart v2.0.2-0.20181012164330-3cb33d48d32d+incompatible
 	golang.org/x/image v0.0.0-20180708004352-c73c2afc3b81 // indirect
 	golang.org/x/net v0.0.0-20180926154720-4dfa2610cdf3
 	golang.org/x/sync v0.0.0-20180314180146-1d60e4601c6f // indirect

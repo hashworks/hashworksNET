@@ -8,7 +8,8 @@ pipeline:
     image: codycraven/sassc
     pull: true
     commands:
-      - sassc -t compressed sass/main.scss sass/main.css
+      - sassc -p 0 -t compressed sass/main.scss sass/main.css
+      - sassc -p 0 -t compressed sass/chart.scss sass/chart.css
 
   build:
     image: golang
