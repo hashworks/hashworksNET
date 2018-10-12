@@ -1,7 +1,7 @@
 @import 'configuration';
 
 body {
-  background-color: $bg-color1;
+  background-color: $bg-color-lighter;
   color: $fg-color-normal;
   font-family: sans-serif;
 }
@@ -29,7 +29,7 @@ svg {
 }
 
 header {
-  background-color: $bg-color3;
+  background-color: $bg-color-header;
   box-shadow: 0 5px 5px 0 $shadow-color;
   font-size: 1.3em;
   left: 0;
@@ -103,7 +103,7 @@ header {
   margin-top: -$content-spacing;
 
   .card {
-    background-color: $bg-color2;
+    background-color: $bg-color-darker;
     box-shadow: -5px 5px 5px 0 $shadow-color;
     flex-grow: 1;
     margin-left: $content-spacing;
