@@ -65,7 +65,6 @@ func (s Server) getCSP(safeCSS bool) string {
 	var styleSrc string
 	if safeCSS {
 		styleSrc = "'sha256-" + strings.Join(s.cssSha256, "' 'sha256-") + "'"
-		fmt.Println(styleSrc)
 	} else {
 		styleSrc = "'unsafe-inline'"
 	}
