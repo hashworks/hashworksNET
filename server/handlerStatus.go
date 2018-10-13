@@ -190,7 +190,8 @@ func messageSVG(c *gin.Context, message string, width int) {
 func (s *Server) handlerStatus(c *gin.Context) {
 	c.Header("Cache-Control", "max-age=600")
 	c.HTML(http.StatusOK, "status", gin.H{
-		"Title":     "status",
-		"StatusTab": true,
+		"Title":       "status",
+		"Description": "Status information.",
+		"StatusTab":   true,
 	})
 }

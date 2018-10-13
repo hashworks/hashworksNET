@@ -8,6 +8,7 @@ import (
 func (s Server) handlerIndex(c *gin.Context) {
 	c.Header("Cache-Control", "max-age=600")
 	c.HTML(http.StatusOK, "index", gin.H{
-		"ContactTab": true,
+		"ContactTab":  true,
+		"Description": "Contact information.",
 	})
 }
