@@ -15,9 +15,6 @@ func (s Server) templateFunctionMap() template.FuncMap {
 		"version": func() string {
 			return s.config.Version
 		},
-		"buildDate": func() string {
-			return s.config.BuildDate
-		},
 	}
 }
 
