@@ -1,9 +1,15 @@
 @import 'configuration';
 
+html { // Required for the footer, see https://stackoverflow.com/a/23442814
+  min-height: 100%;
+  position: relative;
+}
+
 body {
   background-color: $bg-color-lighter;
   color: $fg-color-normal;
   font-family: sans-serif;
+  margin-bottom: $footer-height; // Required for the footer, see https://stackoverflow.com/a/23442814
 }
 
 a {
@@ -32,12 +38,10 @@ header {
   background-color: $bg-color-header;
   box-shadow: 0 5px 5px 0 $shadow-color;
   font-size: 1.3em;
-  left: 0;
   min-height: $header-height;
-  right: 0;
+  position: relative;
   top: 0;
   width: 100%;
-  z-index: 5;
 
   .title,
   .menu .entry {
@@ -86,6 +90,21 @@ header {
     @media screen and (max-width: 200px) {
       display: none;
     }
+  }
+}
+
+footer {
+  background-color: $bg-color-header;
+  bottom: 0;
+  box-shadow: 0 0 5px 5px $shadow-color;
+  font-size: .8em;
+  min-height: $footer-height;
+  position: absolute;
+  width: 100%;
+
+  div {
+    opacity: .6;
+    padding: $footer-height / 4;
   }
 }
 

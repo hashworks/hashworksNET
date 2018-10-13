@@ -1,10 +1,13 @@
 package server
 
 import (
+	"fmt"
 	"github.com/gin-contrib/multitemplate"
 	"github.com/hashworks/hashworksNET/server/bindata"
 	"html/template"
+	"runtime"
 	"strings"
+	"time"
 )
 
 func (s Server) templateFunctionMap() template.FuncMap {
@@ -15,8 +18,11 @@ func (s Server) templateFunctionMap() template.FuncMap {
 		"version": func() string {
 			return s.config.Version
 		},
-		"buildDate": func() string {
-			return s.config.BuildDate
+		"GoVer": func() string {
+			return strings.Title(runtime.Version())
+		},
+		"LoadTimes": func(startTime time.Time) string {
+			return fmt.Sprint(time.Since(startTime).Nanoseconds()/1e3) + "µs"
 		},
 	}
 }
