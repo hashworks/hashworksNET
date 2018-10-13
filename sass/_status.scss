@@ -5,44 +5,23 @@
     background: none;
   }
 
+  //noinspection CssUnknownTarget
   div {
     background: url('/status-1940x1000.svg') no-repeat center top;
     background-size: contain;
     height: 1000px;
 
-    @media screen and (max-width: 2000px) {
-      background-image: url('/status-1700x650.svg');
-      height: 650px;
-    }
+    $sizes: (2000 1700 650)
+            (1700 1380 450)
+            (1400 1145 350)
+            (1000  780 350)
+            (400   200 115);
 
-    @media screen and (max-width: 1700px) {
-      background-image: url('/status-1380x450.svg');
-      height: 450px;
-    }
-
-    @media screen and (max-width: 1400px) {
-      background-image: url('/status-1145x350.svg');
-      height: 353px;
-    }
-
-    @media screen and (max-width: 1000px) {
-      background-image: url('/status-780x350.svg');
-      height: 353px;
-    }
-
-    @media screen and (max-width: 800px) {
-      background-image: url('/status-500x335.svg');
-      height: 337px;
-    }
-
-    @media screen and (max-width: 600px) {
-      background-image: url('/status-400x225.svg');
-      height: 225px;
-    }
-
-    @media screen and (max-width: 400px) {
-      background-image: url('/status-200x115.svg');
-      height: 112px;
+    @each $i in $sizes {
+      @media screen and (max-width: #{nth($i, 1)}px) {
+        background-image: url('/status-#{nth($i, 2)}x#{nth($i, 3)}.svg');
+        height: #{nth($i, 3)}px;
+      }
     }
 
     @media screen and (max-width: 200px) {
