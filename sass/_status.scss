@@ -6,28 +6,28 @@
   }
 
   div {
-    background: url('/status-1940x1060.svg') no-repeat center top;
+    background: url('/status-1940x1000.svg') no-repeat center top;
     background-size: contain;
-    height: 1060px;
+    height: 1000px;
 
     @media screen and (max-width: 2000px) {
-      background-image: url('/status-1700x700.svg');
-      height: 700px;
+      background-image: url('/status-1700x650.svg');
+      height: 650px;
     }
 
     @media screen and (max-width: 1700px) {
-      background-image: url('/status-1380x520.svg');
-      height: 520px;
+      background-image: url('/status-1380x450.svg');
+      height: 450px;
     }
 
     @media screen and (max-width: 1400px) {
-      background-image: url('/status-1145x385.svg');
-      height: 388px;
+      background-image: url('/status-1145x350.svg');
+      height: 353px;
     }
 
     @media screen and (max-width: 1000px) {
-      background-image: url('/status-780x385.svg');
-      height: 388px;
+      background-image: url('/status-780x350.svg');
+      height: 353px;
     }
 
     @media screen and (max-width: 800px) {
