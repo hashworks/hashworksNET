@@ -27,8 +27,11 @@ pipeline:
     image: golang
     pull: true
     commands:
-    - go tool cover --html=coverage.out -o=coverage.html
-    - echo "Coverage report:" "$FILEBIN_BASE"/"$(curl -s "$FILEBIN_BASE"/api/v2.1.1/file/upload -F apikey="$FILEBIN_APIKEY" -F "file=@coverage.html" | cut -d \" -f 10)"
+    - if go tool cover --html=coverage.out -o=coverage.html; then
+    -   if [ -f coverage.html ]; then echo "Coverage report:" "$FILEBIN_BASE"/"$(curl -s "$FILEBIN_BASE"/api/v2.1.1/file/upload -F apikey="$FILEBIN_APIKEY" -F "file=@coverage.html" | cut -d \" -f 10)"; fi
+    - else
+    -   return 1
+    - fi
     secrets: [ filebin_base, filebin_apikey ]
     when:
       event: push
@@ -43,6 +46,32 @@ pipeline:
       branch: master
       event: [push, tag, deployment]
 
+  selenium:
+    image: golang
+    pull: true
+    commands:
+      - cd acception
+      - if ! go test . --hub="selenium-chrome:4444" --url="https://hashworks.net/" --htmlPath acceptionTest.html --screenshotPath acceptionTest.png; then
+      -   if [ -f acceptionTest.html ]; then echo "HTML:" "$FILEBIN_BASE"/"$(curl -s "$FILEBIN_BASE"/api/v2.1.1/file/upload -F apikey="$FILEBIN_APIKEY" -F "file=@acceptionTest.html" | cut -d \" -f 10)"; fi
+      -   if [ -f acceptionTest.png ]; then echo "Screenshot:" "$FILEBIN_BASE"/"$(curl -s "$FILEBIN_BASE"/api/v2.1.1/file/upload -F apikey="$FILEBIN_APIKEY" -F "file=@acceptionTest.png" | cut -d \" -f 10)"; fi
+      -   return 1
+      - fi
+    secrets: [ filebin_base, filebin_apikey ]
+    when:
+      branch: master
+      event: [push, tag, deployment]
+
+  restore:
+    image: rics3n/drone-ansible:2
+    inventory: staging
+    inventory_path: deployment/inventories
+    playbook: deployment/restore.yml
+    secrets: [ ssh_key ]
+    when:
+      branch: master
+      event: [push, tag, deployment]
+      status: [ failure ]
+
   telegram:
     image: appleboy/drone-telegram
     pull: true
@@ -55,3 +84,13 @@ pipeline:
       *Build of {{repo.name}}/{{commit.branch}} {{#success build.status}}*[succeeded]({{build.link}}) 💪{{else}}*[failed]({{build.link}}) 👎{{/success}}
 
       {{build.event}} from {{commit.author}}: [{{commit.message}}]({{commit.link}})
+
+services:
+  selenium-chrome:
+    image: selenium/standalone-chrome
+    pull: true
+    environment:
+      - HUB_HOST=selenium-chrome
+    when:
+      branch: master
+      event: [push, tag, deployment]

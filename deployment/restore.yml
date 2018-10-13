@@ -1,0 +1,26 @@
+---
+- hosts: hive.hashworks.net
+  tasks:
+  - name: Copy systemd unit backup file
+    copy:
+      src: /etc/systemd/system/hashworksNET.service.bak
+      dest: /etc/systemd/system/hashworksNET.service
+      remote_src: yes
+      owner: root
+      group: root
+      mode: 0600
+
+  - name: Copy binary backup file
+    copy:
+      src: /usr/local/bin/hashworksNET.bak
+      dest: /usr/local/bin/hashworksNET
+      remote_src: yes
+      owner: root
+      group: root
+      mode: 0775
+
+  - name: Restart systemd service
+    systemd:
+      name: hashworksNET
+      daemon_reload: true
+      state: restarted
