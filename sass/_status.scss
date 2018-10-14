@@ -5,30 +5,22 @@
     background: none;
   }
 
-  //noinspection CssUnknownTarget
   div {
-    background: url('/status-1940x1000.svg') no-repeat center top;
-    background-size: contain;
-    height: 1000px;
+    text-align: center;
 
-    $sizes: (2000 1700 650)
-            (1700 1380 450)
-            (1400 1145 350)
-            (1000  780 350)
-            (400   200 115);
+    //noinspection CssUnknownTarget
+    &::before {
+      content: url('/status-1940x1000.svg');
 
-    @each $i in $sizes {
-      @media screen and (max-width: #{nth($i, 1)}px) {
-        background-image: url('/status-#{nth($i, 2)}x#{nth($i, 3)}.svg');
-        height: #{nth($i, 3)}px;
+      $sizes: (2000 1700 650) (1700 1380 450) (1400 1145 350) (1000 780 350) (400 200 115);
+
+      @each $i in $sizes {
+        @media screen and (max-width: #{nth($i, 1)}px) {
+          content: url('/status-#{nth($i, 2)}x#{nth($i, 3)}.svg');
+        }
       }
-    }
 
-    @media screen and (max-width: 200px) {
-      background: none;
-      height: auto;
-
-      &::after {
+      @media screen and (max-width: 200px) {
         content: 'Please use a wider screen.';
       }
     }
