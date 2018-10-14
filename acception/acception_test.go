@@ -203,22 +203,12 @@ func TestAcception(t *testing.T) {
 	}
 	assert.Equal(t, articleHeader, "Heart-rate")
 
-	statusBackgroundImage, err := article.FindByXPath("//div[@class='status-svg']/div").CSS("background-image")
-	if !assert.NoError(t, err) {
-		t.FailNow()
-	}
-	if !assert.True(t, strings.HasPrefix(statusBackgroundImage, `url("`)) {
-		t.FailNow()
-	}
-
-	statusBackgroundImage = strings.Split(statusBackgroundImage, `"`)[1]
-
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// STATUS IMAGE CHECK
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 	// Check status svg
-	resp, err = http.Get(statusBackgroundImage)
+	resp, err = http.Get(url + "status-1700x650.svg")
 	if assert.NoError(t, err) {
 		defer resp.Body.Close()
 		body, err := ioutil.ReadAll(resp.Body)
