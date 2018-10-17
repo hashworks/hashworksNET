@@ -22,7 +22,12 @@ func (s Server) templateFunctionMap() template.FuncMap {
 			return strings.Title(runtime.Version())
 		},
 		"LoadTimes": func(startTime time.Time) string {
-			return fmt.Sprint(time.Since(startTime).Nanoseconds()/1e3) + "µs"
+			timeSinceST := time.Since(startTime).Nanoseconds() / 1e3
+			if timeSinceST >= 1000 {
+				return fmt.Sprint(timeSinceST/1e3) + "ms"
+			} else {
+				return fmt.Sprint(timeSinceST) + "µs"
+			}
 		},
 	}
 }

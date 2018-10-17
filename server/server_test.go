@@ -227,7 +227,7 @@ func (s *Server) statusHandlerTest(t *testing.T) {
 }
 
 func (s *Server) svgHandlerTest(t *testing.T) {
-	for _, dimension := range svgDimensions {
+	for _, dimension := range svgBPMDimensions {
 		w := httptest.NewRecorder()
 		req, _ := http.NewRequest("GET", fmt.Sprintf("/status-%dx%d.svg", dimension[0], dimension[1]), nil)
 		s.Router.ServeHTTP(w, req)
@@ -296,7 +296,7 @@ func TestNoInfluxConnection(t *testing.T) {
 		GinMode:       gin.TestMode,
 	})
 	assert.NoError(t, err)
-	for _, dimension := range svgDimensions {
+	for _, dimension := range svgBPMDimensions {
 		path := fmt.Sprintf("/status-%dx%d.svg", dimension[0], dimension[1])
 		w := httptest.NewRecorder()
 		req, _ := http.NewRequest("GET", path, nil)
@@ -314,7 +314,7 @@ func TestInfluxNotEnoughData(t *testing.T) {
 		GinMode:       gin.TestMode,
 	})
 	assert.NoError(t, err)
-	for _, dimension := range svgDimensions {
+	for _, dimension := range svgBPMDimensions {
 		path := fmt.Sprintf("/status-%dx%d.svg", dimension[0], dimension[1])
 		w := httptest.NewRecorder()
 		req, _ := http.NewRequest("GET", path, nil)
@@ -335,7 +335,7 @@ func TestInfluxNoData(t *testing.T) {
 		GinMode:       gin.TestMode,
 	})
 	assert.NoError(t, err)
-	for _, dimension := range svgDimensions {
+	for _, dimension := range svgBPMDimensions {
 		path := fmt.Sprintf("/status-%dx%d.svg", dimension[0], dimension[1])
 		w := httptest.NewRecorder()
 		req, _ := http.NewRequest("GET", path, nil)
@@ -356,7 +356,7 @@ func TestInfluxFailure(t *testing.T) {
 		GinMode:       gin.TestMode,
 	})
 	assert.NoError(t, err)
-	for _, dimension := range svgDimensions {
+	for _, dimension := range svgBPMDimensions {
 		path := fmt.Sprintf("/status-%dx%d.svg", dimension[0], dimension[1])
 		w := httptest.NewRecorder()
 		req, _ := http.NewRequest("GET", path, nil)
@@ -374,7 +374,7 @@ func TestInfluxUnauthorized(t *testing.T) {
 		GinMode:       gin.TestMode,
 	})
 	assert.NoError(t, err)
-	for _, dimension := range svgDimensions {
+	for _, dimension := range svgBPMDimensions {
 		path := fmt.Sprintf("/status-%dx%d.svg", dimension[0], dimension[1])
 		w := httptest.NewRecorder()
 		req, _ := http.NewRequest("GET", path, nil)

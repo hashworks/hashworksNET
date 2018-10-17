@@ -1,32 +1,126 @@
+@import 'configuration';
+
+.ok {
+  color: lighten($status-color-ok, 30);
+}
+
+.error {
+  color: lighten($status-color-error, 30);
+}
+
+.warning {
+  color: lighten($status-color-warning, 30);
+}
+
+.load {
+  text-align: left;
+
+  td {
+    padding: 8px 8px 8px 0;
+  }
+}
+
+.status {
+  margin-bottom: 10px;
+  padding: 3px;
+
+  &.ok,
+  &.error,
+  &.warning {
+    &::before {
+      font-size: 2em;
+      margin: 10px 22px;
+      vertical-align: middle;
+    }
+  }
+
+  &.ok {
+    background-color: $status-color-ok;
+
+    &::before {
+      content: '\2713';
+    }
+  }
+
+  &.error {
+    background-color: $status-color-error;
+
+    &::before {
+      content: '\2717';
+    }
+  }
+
+  &.warning {
+    background-color: $status-color-warning;
+
+    &::before {
+      content: '\26A0';
+    }
+  }
+}
+
+//noinspection CssUnknownTarget
 .status-svg {
   background: url('data:image/svg+xml;charset=UTF-8,<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" height="40" viewBox="0 0 50 50"><path fill="white" d="M25.251,6.461c-10.318,0-18.683,8.365-18.683,18.683h4.068c0-8.071,6.543-14.615,14.615-14.615V6.461z"><animateTransform attributeType="xml" attributeName="transform" type="rotate" from="0 25 25" to="360 25 25" dur="0.6s" repeatCount="indefinite"></animateTransform></path></svg>') no-repeat center top;
 
-  @media screen and (max-width: 200px) {
+  $minimum-width: 380px;
+  @media screen and (max-width: $minimum-width) {
     background: none;
   }
 
-  //noinspection CssUnknownTarget
-  div {
-    background: url('/status-1940x1000.svg') no-repeat center top;
+  .bpm {
+    $max-height: 300;
+    background: url('/bpm-1940x#{$max-height}.svg') no-repeat center top;
     background-size: contain;
-    height: 1000px;
+    height: #{$max-height}px;
 
-    $sizes: (2000 1700 650)
-            (1700 1380 450)
-            (1400 1145 350)
-            (1000  780 350)
-            (800   580 335)
+    $sizes: (2000 1700 #{$max-height})
+            (1700 1380 #{$max-height})
+            (1400 1145 #{$max-height})
+            (1200  980 #{$max-height})
+            (1000  780 #{$max-height})
+            (800   580 #{$max-height})
             (600   380 200)
             (400   200 115);
 
     @each $i in $sizes {
       @media screen and (max-width: #{nth($i, 1)}px) {
-        background-image: url('/status-#{nth($i, 2)}x#{nth($i, 3)}.svg');
+        background-image: url('/bpm-#{nth($i, 2)}x#{nth($i, 3)}.svg');
         height: #{nth($i, 3)}px;
       }
     }
 
-    @media screen and (max-width: 200px) {
+    @media screen and (max-width: $minimum-width) {
+      background: none;
+      height: auto;
+
+      &::after {
+        content: 'Please use a wider screen.';
+      }
+    }
+  }
+
+  .load {
+    background: url('/load-800x200.svg') no-repeat center top;
+    background-size: contain;
+    height: 200px;
+
+    $sizes: (1550 620 180)
+            (1350 520 200)
+            (1200 440 200)
+            (1000 750 200)
+            (750  600 200)
+            (600  380 200)
+            (400  200 115);
+
+    @each $i in $sizes {
+      @media screen and (max-width: #{nth($i, 1)}px) {
+        background-image: url('/load-#{nth($i, 2)}x#{nth($i, 3)}.svg');
+        height: #{nth($i, 3)}px;
+      }
+    }
+
+    @media screen and (max-width: $minimum-width) {
       background: none;
       height: auto;
 

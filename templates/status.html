@@ -2,11 +2,37 @@
 {{template "header" . }}
 <div class="page">
 	<section class="cards">
-		<article class="card full">
-			<h3>Heart-rate</h3>
-			<br/>
+		<article class="card">
+			<div class="tag">HIVE</div>
+			<h1>Server Load</h1>
+			<table class="load">
+			<tr>
+			{{range .Loads }}
+					<td class="{{ .Status }}">{{printf "%.02f" .Value}}</td>
+			{{else}}
+				<div class="status error">No data!</div>
+			{{end}}
+			</tr>
+			</table>
 			<div class="status-svg">
-				<div></div>
+				<div class="load"></div>
+			</div>
+		</article>
+		<article class="card">
+			<div class="tag">HIVE</div>
+			<h1>Public Services</h1>
+			{{range .Services }}
+			<h4>{{.Name}}:</h4>
+			<div class="status {{.Status}}">{{.Message}}</div>
+			{{else}}
+			<div class="status error">No data!</div>
+			{{end}}
+		</article>
+		<article class="card full">
+			<div class="tag">WALKER</div>
+			<h1>Heart-Rate</h1>
+			<div class="status-svg">
+				<div class="bpm"></div>
 			</div>
 		</article>
 	</section>
