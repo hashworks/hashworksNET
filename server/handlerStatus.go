@@ -246,7 +246,8 @@ func (s *Server) handlerBPMSVG(width, height int) func(*gin.Context) {
 				s.recoveryHandler(c, err)
 				return
 			}
-			timeSeries.XValues = append(timeSeries.XValues, time.Unix(timestamp, 0))
+			bpmTime := time.Unix(timestamp, 0)
+			timeSeries.XValues = append(timeSeries.XValues, bpmTime)
 
 			bpm, err := resp.Results[0].Series[0].Values[i][1].(json.Number).Float64()
 			if err != nil {
@@ -258,8 +259,11 @@ func (s *Server) handlerBPMSVG(width, height int) func(*gin.Context) {
 				max = bpm
 			}
 
-			avg += int(bpm)
-			count++
+			// Only calculate average of last hour
+			if bpmTime.Add(time.Hour).After(time.Now()) {
+				avg += int(bpm)
+				count++
+			}
 		}
 
 		avg /= count
@@ -268,8 +272,12 @@ func (s *Server) handlerBPMSVG(width, height int) func(*gin.Context) {
 			timeSeries.Style.StrokeColor = drawing.ColorFromHex(statusColorError)
 		} else if avg >= 100 {
 			timeSeries.Style.StrokeColor = drawing.ColorFromHex(statusColorWarning)
-		} else {
+		} else if avg >= 40 {
 			timeSeries.Style.StrokeColor = drawing.ColorFromHex(statusColorOk)
+		} else if avg >= 30 {
+			timeSeries.Style.StrokeColor = drawing.ColorFromHex(statusColorWarning)
+		} else {
+			timeSeries.Style.StrokeColor = drawing.ColorFromHex(statusColorError)
 		}
 		timeSeries.Style.FillColor = timeSeries.Style.StrokeColor.WithAlpha(16)
 
