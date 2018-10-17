@@ -76,7 +76,7 @@ func (s *Server) handlerStatus(c *gin.Context) {
 	q := client.Query{
 		Command: "SELECT last(*) FROM net_response WHERE port = '32400' AND protocol='tcp' AND time > now() - 2m;" +
 			"SELECT last(*) FROM net_response WHERE port = '6697' AND protocol='tcp' AND time > now() - 2m;" +
-			"SELECT last(load1), last(load5), last(load15) FROM system WHERE host = 'hive' AND time > now() - 2m",
+			fmt.Sprintf("SELECT last(load1), last(load5), last(load15) FROM system WHERE host = '%s' AND time > now() - 2m", s.config.InfluxLoadHost),
 		Database:  "telegraf",
 		Precision: "s",
 	}
@@ -197,7 +197,7 @@ func (s *Server) handlerBPMSVG(width, height int) func(*gin.Context) {
 		}
 
 		q := client.Query{
-			Command:   "SELECT mean(value) FROM bpm WHERE host = '" + s.config.InfluxHost + "' AND time > now() - 12h GROUP BY time(5m)",
+			Command:   "SELECT mean(value) FROM bpm WHERE host = '" + s.config.InfluxBPMHost + "' AND time > now() - 12h GROUP BY time(5m)",
 			Database:  "body",
 			Precision: "s",
 		}
@@ -342,7 +342,7 @@ func (s *Server) handlerLoadSVG(width, height int) func(*gin.Context) {
 		}
 
 		q := client.Query{
-			Command:   "SELECT load1 FROM system WHERE host = 'hive' AND time > now() - 1h",
+			Command:   fmt.Sprintf("SELECT load1 FROM system WHERE host = '%s' AND time > now() - 1h", s.config.InfluxLoadHost),
 			Database:  "telegraf",
 			Precision: "s",
 		}

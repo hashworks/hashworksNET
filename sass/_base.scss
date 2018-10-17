@@ -136,6 +136,7 @@ footer {
       opacity: .6;
       position: absolute;
       right: $content-spacing;
+      text-transform: uppercase;
       top: $content-spacing;
     }
 
@@ -162,6 +163,7 @@ footer {
 
     h1 {
       margin-bottom: 20px;
+      text-transform: capitalize;
     }
 
     h2,
@@ -171,6 +173,7 @@ footer {
     h6 {
       margin-bottom: 10px;
       margin-top: 20px;
+      text-transform: capitalize;
     }
   }
 }

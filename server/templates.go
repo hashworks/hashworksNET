@@ -21,6 +21,9 @@ func (s Server) templateFunctionMap() template.FuncMap {
 		"GoVer": func() string {
 			return strings.Title(runtime.Version())
 		},
+		"LoadHost": func() string {
+			return s.config.InfluxLoadHost
+		},
 		"LoadTimes": func(startTime time.Time) string {
 			timeSinceST := time.Since(startTime).Nanoseconds() / 1e3
 			if timeSinceST >= 1000 {

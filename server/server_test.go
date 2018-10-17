@@ -165,7 +165,7 @@ func TestBasicParallel(t *testing.T) {
 	s, err := NewServer(Config{
 		TLSProxy:       true,
 		InfluxAddress:  influxAddressData,
-		InfluxHost:     "Max Mustermann",
+		InfluxBPMHost:  "Max Mustermann",
 		InfluxUsername: "foo",
 		InfluxPassword: "bar",
 		GinMode:        gin.TestMode,
@@ -292,7 +292,7 @@ func (s *Server) robotsTest(t *testing.T) {
 func TestNoInfluxConnection(t *testing.T) {
 	s, err := NewServer(Config{
 		InfluxAddress: "http://127.0.0.1:1",
-		InfluxHost:    "Max Mustermann",
+		InfluxBPMHost: "Max Mustermann",
 		GinMode:       gin.TestMode,
 	})
 	assert.NoError(t, err)
@@ -310,7 +310,7 @@ func TestNoInfluxConnection(t *testing.T) {
 func TestInfluxNotEnoughData(t *testing.T) {
 	s, err := NewServer(Config{
 		InfluxAddress: influxAddressNotEnoughData,
-		InfluxHost:    "Max Mustermann",
+		InfluxBPMHost: "Max Mustermann",
 		GinMode:       gin.TestMode,
 	})
 	assert.NoError(t, err)
@@ -331,7 +331,7 @@ func TestInfluxNotEnoughData(t *testing.T) {
 func TestInfluxNoData(t *testing.T) {
 	s, err := NewServer(Config{
 		InfluxAddress: influxAddressNoData,
-		InfluxHost:    "Max Mustermann",
+		InfluxBPMHost: "Max Mustermann",
 		GinMode:       gin.TestMode,
 	})
 	assert.NoError(t, err)
@@ -352,7 +352,7 @@ func TestInfluxNoData(t *testing.T) {
 func TestInfluxFailure(t *testing.T) {
 	s, err := NewServer(Config{
 		InfluxAddress: influxAddressFailure,
-		InfluxHost:    "Max Mustermann",
+		InfluxBPMHost: "Max Mustermann",
 		GinMode:       gin.TestMode,
 	})
 	assert.NoError(t, err)
@@ -370,7 +370,7 @@ func TestInfluxFailure(t *testing.T) {
 func TestInfluxUnauthorized(t *testing.T) {
 	s, err := NewServer(Config{
 		InfluxAddress: influxAddressUnauthorized,
-		InfluxHost:    "Max Mustermann",
+		InfluxBPMHost: "Max Mustermann",
 		GinMode:       gin.TestMode,
 	})
 	assert.NoError(t, err)
@@ -388,7 +388,7 @@ func TestInfluxUnauthorized(t *testing.T) {
 func TestNoDebugCSS(t *testing.T) {
 	s, err := NewServer(Config{
 		InfluxAddress: "http://127.0.0.1:1",
-		InfluxHost:    "Max Mustermann",
+		InfluxBPMHost: "Max Mustermann",
 		GinMode:       gin.TestMode,
 		Debug:         false,
 	})
@@ -404,18 +404,18 @@ func TestNoDebugCSS(t *testing.T) {
 
 func TestConfigError(t *testing.T) {
 	_, err := NewServer(Config{
-		InfluxHost: "",
+		InfluxBPMHost: "",
 	})
 	assert.EqualErrorf(t, err, "Influx host cannot be empty.", "")
 
 	_, err = NewServer(Config{
-		InfluxHost:    "Max Mustermann",
+		InfluxBPMHost: "Max Mustermann",
 		InfluxAddress: "",
 	})
 	assert.EqualErrorf(t, err, "Influx address cannot be empty.", "")
 
 	_, err = NewServer(Config{
-		InfluxHost:    "Max Mustermann",
+		InfluxBPMHost: "Max Mustermann",
 		InfluxAddress: "127.0.0.1:80",
 	})
 	assert.EqualErrorf(t, err, "Influx address must be a valid URI.", "")
@@ -425,7 +425,7 @@ func TestWrongHost(t *testing.T) {
 	s, err := NewServer(Config{
 		Domain:        "test.example.de",
 		InfluxAddress: "http://127.0.0.1:1",
-		InfluxHost:    "Max Mustermann",
+		InfluxBPMHost: "Max Mustermann",
 		TLSProxy:      true,
 		GinMode:       gin.TestMode,
 		Debug:         true,

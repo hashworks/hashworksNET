@@ -34,7 +34,8 @@ type Config struct {
 	GZIPExtension  bool
 	Debug          bool
 	Domain         string
-	InfluxHost     string
+	InfluxBPMHost  string
+	InfluxLoadHost string
 	InfluxAddress  string
 	InfluxUsername string
 	InfluxPassword string
@@ -100,7 +101,7 @@ func NewServer(config Config) (Server, error) {
 }
 
 func testConfig(c *Config) error {
-	if c.InfluxHost == "" {
+	if c.InfluxBPMHost == "" {
 		return errors.New("Influx host cannot be empty.")
 	}
 	if c.InfluxAddress == "" {
