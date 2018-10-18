@@ -312,6 +312,7 @@ func TestBasicParallel(t *testing.T) {
 		t.Run("statusHandler", s.statusHandlerTest)
 		t.Run("redirect", s.redirectTest)
 		t.Run("images", s.imagesTest)
+		t.Run("css", s.cssTest)
 		t.Run("statics", s.staticsTest)
 		t.Run("notFound", s.notFoundTest)
 		t.Run("robots", s.robotsTest)
@@ -325,7 +326,10 @@ func (s *Server) headerTest(t *testing.T) {
 		s.Router.ServeHTTP(w, req)
 
 		assert.Equal(t, 200, w.Code)
-		assert.True(t, strings.Contains(w.Body.String(), fmt.Sprintf("<style type=\"text/css\" rel=\"stylesheet\">%s</style>", s.css)))
+		assert.True(t, strings.Contains(w.Body.String(), fmt.Sprintf(`<style rel="stylesheet" type="text/css">%s</style>`, s.css)))
+		if path == "/status" {
+			assert.True(t, strings.Contains(w.Body.String(), `<link rel="stylesheet" type="text/css" href="/css/status.css">`))
+		}
 	}
 }
 
@@ -380,6 +384,15 @@ func (s *Server) imagesTest(t *testing.T) {
 		assert.Equal(t, 200, w.Code)
 		assert.True(t, strings.HasPrefix(w.Header().Get("Content-Type"), "image"))
 	}
+}
+
+func (s *Server) cssTest(t *testing.T) {
+	w := httptest.NewRecorder()
+	req, _ := http.NewRequest("GET", "/css/chart.css", nil)
+	s.Router.ServeHTTP(w, req)
+
+	assert.Equal(t, 200, w.Code)
+	assert.Equal(t, "text/css", w.Header().Get("Content-Type"))
 }
 
 func (s *Server) staticsTest(t *testing.T) {
@@ -568,7 +581,7 @@ func TestNoDebugCSS(t *testing.T) {
 
 	assert.Equal(t, http.StatusOK, w.Code)
 	assert.Contains(t, w.Body.String(), "mail@hashworks.net")
-	assert.True(t, strings.Contains(w.Body.String(), fmt.Sprintf("<style type=\"text/css\" rel=\"stylesheet\">%s</style>", s.css)))
+	assert.True(t, strings.Contains(w.Body.String(), fmt.Sprintf("<style rel=\"stylesheet\" type=\"text/css\">%s</style>", s.css)))
 }
 
 func TestConfigError(t *testing.T) {

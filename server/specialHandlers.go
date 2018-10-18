@@ -48,6 +48,7 @@ func (s Server) preHandler() gin.HandlerFunc {
 		if strings.HasPrefix(c.Request.URL.Path, "/img/") {
 			c.Header("Cache-Control", "max-age=31540000")
 		} else if strings.HasPrefix(c.Request.URL.Path, "/css/") {
+			c.Header("Content-Type", "text/css")
 			c.Header("Cache-Control", "max-age=604800")
 		} else if strings.HasPrefix(c.Request.URL.Path, "/static/") {
 			c.Header("Cache-Control", "max-age=604800")
