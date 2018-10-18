@@ -127,12 +127,11 @@ func (s *Server) handlerStatus(c *gin.Context) {
 			}
 
 			if result == "success" {
-				result = "Online"
+				newService.Message = fmt.Sprintf("Online. %.02fs reponse time.", responseTime)
 			} else {
-				result = strings.Title(result)
+				newService.Message = fmt.Sprintf("%s.", strings.Title(result))
 			}
 
-			newService.Message = fmt.Sprintf("%s. %.02fs reponse time.", result, responseTime)
 		}
 		services = append(services, newService)
 	}
@@ -236,7 +235,17 @@ func (s *Server) handlerBPMSVG(width, height int) func(*gin.Context) {
 		avg := 0
 		count := 0 // Since len(…) could be wrong
 
-		for i := 0; i < len(resp.Results[0].Series[0].Values); i++ {
+		length := len(resp.Results[0].Series[0].Values)
+
+		// Get last time
+		timestamp, err := resp.Results[0].Series[0].Values[length-1][0].(json.Number).Int64()
+		if err != nil {
+			s.recoveryHandler(c, err)
+			return
+		}
+		lastBPMTime := time.Unix(timestamp, 0)
+
+		for i := 0; i < length; i++ {
 			if len(resp.Results[0].Series[0].Values[i]) == 0 || resp.Results[0].Series[0].Values[i][0] == nil || resp.Results[0].Series[0].Values[i][1] == nil {
 				continue
 			}
@@ -260,13 +269,17 @@ func (s *Server) handlerBPMSVG(width, height int) func(*gin.Context) {
 			}
 
 			// Only calculate average of last hour
-			if bpmTime.Add(time.Hour).After(time.Now()) {
+			if bpmTime.Add(time.Hour).After(lastBPMTime) {
 				avg += int(bpm)
 				count++
 			}
 		}
 
-		avg /= count
+		if count != 0 {
+			avg /= count
+		} else {
+			avg = 0
+		}
 
 		if avg >= 130 {
 			timeSeries.Style.StrokeColor = drawing.ColorFromHex(statusColorError)
@@ -279,7 +292,7 @@ func (s *Server) handlerBPMSVG(width, height int) func(*gin.Context) {
 		} else {
 			timeSeries.Style.StrokeColor = drawing.ColorFromHex(statusColorError)
 		}
-		timeSeries.Style.FillColor = timeSeries.Style.StrokeColor.WithAlpha(16)
+		timeSeries.Style.FillColor = timeSeries.Style.StrokeColor.WithAlpha(50)
 
 		backgroundColor := drawing.ColorFromHex("272727")
 		foregroundColor := drawing.ColorWhite
@@ -420,7 +433,7 @@ func (s *Server) handlerLoadSVG(width, height int) func(*gin.Context) {
 		} else {
 			short.Style.StrokeColor = drawing.ColorFromHex(statusColorOk)
 		}
-		short.Style.FillColor = short.Style.StrokeColor.WithAlpha(16)
+		short.Style.FillColor = short.Style.StrokeColor.WithAlpha(50)
 
 		backgroundColor := drawing.ColorFromHex("272727")
 		foregroundColor := drawing.ColorWhite
