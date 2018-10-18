@@ -48,9 +48,7 @@ type Load struct {
 	Value  float64
 }
 
-func (s *Server) handlerStatus(c *gin.Context) {
-	pageStartTime := time.Now()
-
+func (s *Server) queryInfluxDB(c *gin.Context, command, db string) *client.Response {
 	influxConfig := client.HTTPConfig{
 		Addr:      s.config.InfluxAddress,
 		UserAgent: "hashworksNET/" + s.config.Version,
@@ -64,25 +62,36 @@ func (s *Server) handlerStatus(c *gin.Context) {
 
 	if err != nil {
 		s.recoveryHandlerStatus(http.StatusBadGateway, c, err)
-		return
+		return nil
 	}
 
 	q := client.Query{
-		Command: "SELECT last(*) FROM net_response WHERE port = '32400' AND protocol='tcp' AND time > now() - 2m;" +
-			"SELECT last(*) FROM net_response WHERE port = '6697' AND protocol='tcp' AND time > now() - 2m;" +
-			fmt.Sprintf("SELECT last(load1), last(load5), last(load15) FROM system WHERE host = '%s' AND time > now() - 2m", s.config.InfluxLoadHost),
-		Database:  "telegraf",
+		Command:   command,
+		Database:  db,
 		Precision: "s",
 	}
 
 	resp, err := httpClient.Query(q)
 
-	// I've done some testing here, the InfluxDB query alone takes 30-100ms, the rest are peanuts.
-
 	if err != nil {
 		s.recoveryHandlerStatus(http.StatusBadGateway, c, err)
-		return
+		return nil
 	}
+
+	if len(resp.Results) == 0 {
+		s.recoveryHandlerStatus(http.StatusInternalServerError, c, errors.New("InfluxDB query failed."))
+		return nil
+	}
+
+	return resp
+}
+
+func (s *Server) handlerStatus(c *gin.Context) {
+	pageStartTime := time.Now()
+
+	resp := s.queryInfluxDB(c, "SELECT last(*) FROM net_response WHERE port = '32400' AND protocol='tcp' AND time > now() - 2m;"+
+		"SELECT last(*) FROM net_response WHERE port = '6697' AND protocol='tcp' AND time > now() - 2m;"+
+		fmt.Sprintf("SELECT last(load1), last(load5), last(load15) FROM system WHERE host = '%s' AND time > now() - 2m", s.config.InfluxLoadHost), "telegraf")
 
 	if len(resp.Results) != 3 {
 		s.recoveryHandlerStatus(http.StatusInternalServerError, c, errors.New("InfluxDB query failed."))
@@ -171,41 +180,22 @@ func (s *Server) handlerStatus(c *gin.Context) {
 	})
 }
 
+func (s *Server) drawChart(c *gin.Context, graph chart.Chart) {
+	c.Header("Content-Type", chart.ContentTypeSVG)
+	c.Header("Cache-Control", "max-age=600")
+
+	if err := graph.Render(chart.SVGWithCSS(s.chartCSS, ""), c.Writer); err != nil {
+		log.Printf("%s - Error: %s", time.Now().Format(time.RFC3339), err.Error())
+		c.AbortWithStatus(500)
+		return
+	}
+
+	c.Status(200)
+}
+
 func (s *Server) handlerBPMSVG(width, height int) func(*gin.Context) {
 	return func(c *gin.Context) {
-		influxConfig := client.HTTPConfig{
-			Addr:      s.config.InfluxAddress,
-			UserAgent: "hashworksNET/" + s.config.Version,
-		}
-		if s.config.InfluxUsername != "" && s.config.InfluxPassword != "" {
-			influxConfig.Username = s.config.InfluxUsername
-			influxConfig.Password = s.config.InfluxPassword
-		}
-		httpClient, err := client.NewHTTPClient(influxConfig)
-		defer httpClient.Close()
-
-		if err != nil {
-			s.recoveryHandlerStatus(http.StatusBadGateway, c, err)
-			return
-		}
-
-		q := client.Query{
-			Command:   "SELECT mean(value) FROM bpm WHERE host = '" + s.config.InfluxBPMHost + "' AND time > now() - 12h GROUP BY time(5m)",
-			Database:  "body",
-			Precision: "s",
-		}
-
-		resp, err := httpClient.Query(q)
-
-		if err != nil {
-			s.recoveryHandlerStatus(http.StatusBadGateway, c, err)
-			return
-		}
-
-		if len(resp.Results) == 0 {
-			s.recoveryHandlerStatus(http.StatusInternalServerError, c, errors.New("InfluxDB query failed."))
-			return
-		}
+		resp := s.queryInfluxDB(c, fmt.Sprintf("SELECT mean(value) FROM bpm WHERE host = '%s' AND time > now() - 12h GROUP BY time(5m)", s.config.InfluxBPMHost), "body")
 
 		if len(resp.Results[0].Series) == 0 || len(resp.Results[0].Series[0].Values) < 2 {
 			messageSVG(c, "Not enough heart-rate data collected in the last 12h to draw a graph.", width)
@@ -324,54 +314,13 @@ func (s *Server) handlerBPMSVG(width, height int) func(*gin.Context) {
 			}),
 		}
 
-		c.Header("Content-Type", chart.ContentTypeSVG)
-		c.Header("Cache-Control", "max-age=600")
-
-		if err := graph.Render(chart.SVGWithCSS(s.chartCSS, ""), c.Writer); err != nil {
-			log.Printf("%s - Error: %s", time.Now().Format(time.RFC3339), err.Error())
-			c.AbortWithStatus(500)
-			return
-		}
-
-		c.Status(200)
+		s.drawChart(c, graph)
 	}
 }
 
 func (s *Server) handlerLoadSVG(width, height int) func(*gin.Context) {
 	return func(c *gin.Context) {
-		influxConfig := client.HTTPConfig{
-			Addr:      s.config.InfluxAddress,
-			UserAgent: "hashworksNET/" + s.config.Version,
-		}
-		if s.config.InfluxUsername != "" && s.config.InfluxPassword != "" {
-			influxConfig.Username = s.config.InfluxUsername
-			influxConfig.Password = s.config.InfluxPassword
-		}
-		httpClient, err := client.NewHTTPClient(influxConfig)
-		defer httpClient.Close()
-
-		if err != nil {
-			s.recoveryHandlerStatus(http.StatusBadGateway, c, err)
-			return
-		}
-
-		q := client.Query{
-			Command:   fmt.Sprintf("SELECT load1 FROM system WHERE host = '%s' AND time > now() - 1h", s.config.InfluxLoadHost),
-			Database:  "telegraf",
-			Precision: "s",
-		}
-
-		resp, err := httpClient.Query(q)
-
-		if err != nil {
-			s.recoveryHandlerStatus(http.StatusBadGateway, c, err)
-			return
-		}
-
-		if len(resp.Results) == 0 {
-			s.recoveryHandlerStatus(http.StatusInternalServerError, c, errors.New("InfluxDB query failed."))
-			return
-		}
+		resp := s.queryInfluxDB(c, fmt.Sprintf("SELECT load1 FROM system WHERE host = '%s' AND time > now() - 1h", s.config.InfluxLoadHost), "telegraf")
 
 		if len(resp.Results[0].Series) == 0 || len(resp.Results[0].Series[0].Values) <= 2 || len(resp.Results[0].Series[0].Values[0]) < 2 {
 			messageSVG(c, "Not enough load data collected in the last hour to draw a graph.", width)
@@ -381,6 +330,7 @@ func (s *Server) handlerLoadSVG(width, height int) func(*gin.Context) {
 		if s.config.Debug {
 			log.Println(resp.Results[0].Series[0].Values)
 		}
+
 		short := chart.TimeSeries{
 			Name: "Short",
 			Style: chart.Style{
@@ -464,17 +414,7 @@ func (s *Server) handlerLoadSVG(width, height int) func(*gin.Context) {
 			}),
 		}
 
-		c.Header("Content-Type", "image/svg+xml")
-		c.Header("Cache-Control", "max-age=600")
-		c.Header("Content-Security-Policy", s.getCSP(false)) // Our SVGs require inline CSS
-
-		if err := graph.Render(chart.SVGWithCSS(s.chartCSS, ""), c.Writer); err != nil {
-			log.Println(err)
-			c.AbortWithStatus(500)
-			return
-		}
-
-		c.Status(200)
+		s.drawChart(c, graph)
 	}
 }
 
