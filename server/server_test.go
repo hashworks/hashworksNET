@@ -12,7 +12,9 @@ import (
 	"testing"
 )
 
-var influxAddressData,
+var influxAddressBPMData,
+	influxAddressLoadData,
+	influxAddressStatusData,
 	influxAddressNotEnoughData,
 	influxAddressNoData,
 	influxAddressFailure,
@@ -24,7 +26,7 @@ func TestMain(m *testing.M) {
 }
 
 func emulateInflux() {
-	http.HandleFunc("/query", func(w http.ResponseWriter, _ *http.Request) {
+	http.HandleFunc("/bpmData/query", func(w http.ResponseWriter, _ *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
 		w.Write([]byte(`
@@ -91,6 +93,131 @@ func emulateInflux() {
    ]
 }`))
 	})
+	http.HandleFunc("/loadData/query", func(w http.ResponseWriter, _ *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte(`{
+  "results": [
+    {
+      "statement_id": 0,
+      "series": [
+        {
+          "name": "system",
+          "columns": [
+            "time",
+            "load1"
+          ],
+          "values": [
+            [
+              1439837470,
+              0.29
+            ],
+            [
+              1439837480,
+              0.25
+            ],
+            [
+              1439837490,
+              0.44
+            ],
+            [
+              1439837500,
+              0.52
+            ],
+            [
+              1439837510,
+              0.52
+            ],
+            [
+              1439837520,
+              0.44
+            ],
+            [
+              1439837530,
+              0.37
+            ]
+          ]
+        }
+      ]
+    }
+  ]
+}`))
+	})
+	http.HandleFunc("/statusData/query", func(w http.ResponseWriter, _ *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte(`
+{
+  "results": [
+    {
+      "statement_id": 0,
+      "series": [
+        {
+          "name": "net_response",
+          "columns": [
+            "time",
+            "last_response_time",
+            "last_result_code",
+            "last_result_type"
+          ],
+          "values": [
+            [
+              "2018-10-18T05:06:07.287339614Z",
+              30.022948892,
+              1,
+              "timeout"
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "statement_id": 1,
+      "series": [
+        {
+          "name": "net_response",
+          "columns": [
+            "time",
+            "last_response_time",
+            "last_result_code",
+            "last_result_type"
+          ],
+          "values": [
+            [
+              "2018-10-18T05:06:07.287339614Z",
+              0.022948892,
+              0,
+              "success"
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "statement_id": 2,
+      "series": [
+        {
+          "name": "system",
+          "columns": [
+            "time",
+            "last",
+            "last_1",
+            "last_2"
+          ],
+          "values": [
+            [
+              "2018-10-18T05:11:30.280230906Z",
+              2.2,
+              5.01,
+              9.34
+            ]
+          ]
+        }
+      ]
+    }
+  ]
+}`))
+	})
 	http.HandleFunc("/notEnoughData/query", func(w http.ResponseWriter, _ *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
@@ -154,17 +281,21 @@ func emulateInflux() {
 		}
 	}()
 
-	influxAddressData = "http://" + listener.Addr().String()
-	influxAddressNotEnoughData = influxAddressData + "/notEnoughData"
-	influxAddressNoData = influxAddressData + "/noData"
-	influxAddressFailure = influxAddressData + "/failure"
-	influxAddressUnauthorized = influxAddressData + "/unauthorized"
+	influxAddress := "http://" + listener.Addr().String()
+	influxAddressBPMData = influxAddress + "/bpmData"
+	influxAddressLoadData = influxAddress + "/loadData"
+	influxAddressStatusData = influxAddress + "/statusData"
+	influxAddressNotEnoughData = influxAddress + "/notEnoughData"
+	influxAddressNoData = influxAddress + "/noData"
+	influxAddressFailure = influxAddress + "/failure"
+	influxAddressUnauthorized = influxAddress + "/unauthorized"
 }
 
 func TestBasicParallel(t *testing.T) {
 	s, err := NewServer(Config{
 		TLSProxy:       true,
-		InfluxAddress:  influxAddressData,
+		InfluxAddress:  influxAddressStatusData,
+		InfluxLoadHost: "serverhostname",
 		InfluxBPMHost:  "Max Mustermann",
 		InfluxUsername: "foo",
 		InfluxPassword: "bar",
@@ -179,7 +310,6 @@ func TestBasicParallel(t *testing.T) {
 		t.Run("notFoundHandler", s.notFoundHandlerTest)
 		t.Run("indexHandler", s.indexHandlerTest)
 		t.Run("statusHandler", s.statusHandlerTest)
-		t.Run("svgHandler", s.svgHandlerTest)
 		t.Run("redirect", s.redirectTest)
 		t.Run("images", s.imagesTest)
 		t.Run("statics", s.staticsTest)
@@ -223,20 +353,13 @@ func (s *Server) statusHandlerTest(t *testing.T) {
 	s.Router.ServeHTTP(w, req)
 
 	assert.Equal(t, 200, w.Code)
-	assert.True(t, strings.Contains(w.Body.String(), "status-svg"))
-}
-
-func (s *Server) svgHandlerTest(t *testing.T) {
-	for _, dimension := range svgBPMDimensions {
-		w := httptest.NewRecorder()
-		req, _ := http.NewRequest("GET", fmt.Sprintf("/status-%dx%d.svg", dimension[0], dimension[1]), nil)
-		s.Router.ServeHTTP(w, req)
-
-		assert.Equal(t, 200, w.Code)
-		assert.Equal(t, "image/svg+xml", w.Header().Get("Content-Type"))
-		assert.True(t, strings.HasPrefix(w.Body.String(), "<svg xmlns"))
-		assert.True(t, strings.HasSuffix(w.Body.String(), "</svg>"))
-	}
+	body := w.Body.String()
+	assert.True(t, strings.Contains(body, s.config.InfluxLoadHost))
+	assert.True(t, strings.Contains(body, `<td class="ok">2.20</td>`))
+	assert.True(t, strings.Contains(body, `<td class="warning">5.01</td>`))
+	assert.True(t, strings.Contains(body, `<td class="error">9.34</td>`))
+	assert.True(t, strings.Contains(body, `<div class="status error">Timeout.</div>`))
+	assert.True(t, strings.Contains(body, `<div class="status ok">Online. 0.02s reponse time.</div>`))
 }
 
 func (s *Server) redirectTest(t *testing.T) {
@@ -289,6 +412,52 @@ func (s *Server) robotsTest(t *testing.T) {
 	assert.Contains(t, w.Body.String(), "User-agent")
 }
 
+func TestBPMSVG(t *testing.T) {
+	s, err := NewServer(Config{
+		TLSProxy:       true,
+		InfluxAddress:  influxAddressBPMData,
+		InfluxBPMHost:  "Max Mustermann",
+		InfluxUsername: "foo",
+		InfluxPassword: "bar",
+		GinMode:        gin.TestMode,
+		GZIPExtension:  true,
+	})
+	assert.NoError(t, err)
+	for _, dimension := range svgBPMDimensions {
+		w := httptest.NewRecorder()
+		req, _ := http.NewRequest("GET", fmt.Sprintf("/bpm-%dx%d.svg", dimension[0], dimension[1]), nil)
+		s.Router.ServeHTTP(w, req)
+
+		assert.Equal(t, 200, w.Code)
+		assert.Equal(t, "image/svg+xml", w.Header().Get("Content-Type"))
+		assert.True(t, strings.HasPrefix(w.Body.String(), "<svg xmlns"))
+		assert.True(t, strings.HasSuffix(w.Body.String(), "</svg>"))
+	}
+}
+
+func TestLoadSVG(t *testing.T) {
+	s, err := NewServer(Config{
+		TLSProxy:       true,
+		InfluxAddress:  influxAddressLoadData,
+		InfluxBPMHost:  "Max Mustermann",
+		InfluxUsername: "foo",
+		InfluxPassword: "bar",
+		GinMode:        gin.TestMode,
+		GZIPExtension:  true,
+	})
+	assert.NoError(t, err)
+	for _, dimension := range svgLoadDimensions {
+		w := httptest.NewRecorder()
+		req, _ := http.NewRequest("GET", fmt.Sprintf("/load-%dx%d.svg", dimension[0], dimension[1]), nil)
+		s.Router.ServeHTTP(w, req)
+
+		assert.Equal(t, 200, w.Code)
+		assert.Equal(t, "image/svg+xml", w.Header().Get("Content-Type"))
+		assert.True(t, strings.HasPrefix(w.Body.String(), "<svg xmlns"))
+		assert.True(t, strings.HasSuffix(w.Body.String(), "</svg>"))
+	}
+}
+
 func TestNoInfluxConnection(t *testing.T) {
 	s, err := NewServer(Config{
 		InfluxAddress: "http://127.0.0.1:1",
@@ -297,7 +466,7 @@ func TestNoInfluxConnection(t *testing.T) {
 	})
 	assert.NoError(t, err)
 	for _, dimension := range svgBPMDimensions {
-		path := fmt.Sprintf("/status-%dx%d.svg", dimension[0], dimension[1])
+		path := fmt.Sprintf("/bpm-%dx%d.svg", dimension[0], dimension[1])
 		w := httptest.NewRecorder()
 		req, _ := http.NewRequest("GET", path, nil)
 		s.Router.ServeHTTP(w, req)
@@ -315,7 +484,7 @@ func TestInfluxNotEnoughData(t *testing.T) {
 	})
 	assert.NoError(t, err)
 	for _, dimension := range svgBPMDimensions {
-		path := fmt.Sprintf("/status-%dx%d.svg", dimension[0], dimension[1])
+		path := fmt.Sprintf("/bpm-%dx%d.svg", dimension[0], dimension[1])
 		w := httptest.NewRecorder()
 		req, _ := http.NewRequest("GET", path, nil)
 		s.Router.ServeHTTP(w, req)
@@ -336,7 +505,7 @@ func TestInfluxNoData(t *testing.T) {
 	})
 	assert.NoError(t, err)
 	for _, dimension := range svgBPMDimensions {
-		path := fmt.Sprintf("/status-%dx%d.svg", dimension[0], dimension[1])
+		path := fmt.Sprintf("/bpm-%dx%d.svg", dimension[0], dimension[1])
 		w := httptest.NewRecorder()
 		req, _ := http.NewRequest("GET", path, nil)
 		s.Router.ServeHTTP(w, req)
@@ -357,7 +526,7 @@ func TestInfluxFailure(t *testing.T) {
 	})
 	assert.NoError(t, err)
 	for _, dimension := range svgBPMDimensions {
-		path := fmt.Sprintf("/status-%dx%d.svg", dimension[0], dimension[1])
+		path := fmt.Sprintf("/bpm-%dx%d.svg", dimension[0], dimension[1])
 		w := httptest.NewRecorder()
 		req, _ := http.NewRequest("GET", path, nil)
 		s.Router.ServeHTTP(w, req)
@@ -375,7 +544,7 @@ func TestInfluxUnauthorized(t *testing.T) {
 	})
 	assert.NoError(t, err)
 	for _, dimension := range svgBPMDimensions {
-		path := fmt.Sprintf("/status-%dx%d.svg", dimension[0], dimension[1])
+		path := fmt.Sprintf("/bpm-%dx%d.svg", dimension[0], dimension[1])
 		w := httptest.NewRecorder()
 		req, _ := http.NewRequest("GET", path, nil)
 		s.Router.ServeHTTP(w, req)
