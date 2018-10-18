@@ -45,14 +45,16 @@ func (s Server) preHandler() gin.HandlerFunc {
 			s.loadTemplates()
 		}
 
-		if strings.HasPrefix(c.Request.URL.Path, "/static/") {
+		if strings.HasPrefix(c.Request.URL.Path, "/img/") {
+			c.Header("Cache-Control", "max-age=31540000")
+		} else if strings.HasPrefix(c.Request.URL.Path, "/css/") {
+			c.Header("Cache-Control", "max-age=604800")
+		} else if strings.HasPrefix(c.Request.URL.Path, "/static/") {
 			c.Header("Cache-Control", "max-age=604800")
 			c.Header("Content-Description", "File Transfer")
 			c.Header("Content-Disposition", "attachment")
 			c.Header("Content-Type", "application/octet-stream")
 			c.Header("Content-Transfer-Encoding", "binary")
-		} else if strings.HasPrefix(c.Request.URL.Path, "/img/") {
-			c.Header("Cache-Control", "max-age=31540000")
 		}
 	}
 }

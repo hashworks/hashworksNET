@@ -49,10 +49,10 @@ func NewServer(config Config) (Server, error) {
 	}
 	gin.SetMode(config.GinMode)
 
-	cssBytes := bindata.FileSassMainCSS
+	cssBytes := bindata.FileCSSMainCSS
 	cssSha256 := sha256.Sum256(cssBytes)
 
-	chartCSSBytes := bindata.FileSassChartCSS
+	chartCSSBytes := bindata.FileCSSChartCSS
 	chartCSSSha256 := sha256.Sum256(chartCSSBytes)
 
 	s := Server{
@@ -80,6 +80,7 @@ func NewServer(config Config) (Server, error) {
 
 	s.Router.StaticFS("/static", &prefixHTTPFS{prefix: "static"})
 	s.Router.StaticFS("/img", &prefixHTTPFS{prefix: "img"})
+	s.Router.StaticFS("/css", &prefixHTTPFS{prefix: "css"})
 
 	s.Router.GET("/robots.txt", func(c *gin.Context) {
 		c.String(http.StatusOK, "User-agent: *\nDisallow: /status\nDisallow: /status-*.svg")

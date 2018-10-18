@@ -17,7 +17,6 @@ func (s Server) getSecureMiddleware() *secure.Secure {
 func (s Server) secureHandler(secureMiddleware *secure.Secure) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		err := secureMiddleware.Process(c.Writer, c.Request)
-
 		if err != nil {
 			s.recoveryHandlerStatus(http.StatusBadRequest, c, err)
 			return
@@ -75,7 +74,7 @@ func (s Server) getCSP(safeCSS bool) string {
 	return fmt.Sprintf("%s"+
 		"default-src 'none';"+
 		"script-src 'none';"+
-		"style-src %s;"+
+		"style-src %s 'self';"+
 		"img-src 'self' data:;"+
 		"connect-src 'none';"+
 		"font-src 'none';"+

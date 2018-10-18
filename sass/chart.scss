@@ -4,57 +4,84 @@ svg {
   font-family: sans-serif;
 }
 
-.background,
-.canvas {
+.bg {
   fill: $bg-color-darker;
   stroke: $fg-color-normal;
   stroke-width: 0;
 }
 
-path.xaxis,
-path.yaxis {
-  fill: none;
-  stroke: $bg-color-lighter;
-  stroke-width: 1;
-}
+.axis {
+  &.stroke {
+    fill: none;
+    stroke: $bg-color-lighter;
+    stroke-width: 1;
+  }
 
-text.xaxis,
-text.yaxis {
-  fill: $fg-color-normal;
-  font-size: 12.8px;
-  stroke: none;
-  stroke-width: 0;
+  &.text {
+    fill: $fg-color-normal;
+    font-size: 12.8px;
+    stroke: none;
+    stroke-width: 0;
+  }
 }
 
 .series {
-  fill: none;
-  stroke: $chart-stroke;
+  &.stroke {
+    fill: none;
+    stroke-width: 1;
+  }
+
+  &.fill {
+    stroke: none;
+    stroke-width: 0;
+  }
+}
+
+.legend {
   stroke-width: 1;
+
+  &.text {
+    fill: $fg-color-normal;
+    font-size: 10.2px;
+    stroke: none;
+    stroke-width: 0;
+  }
+
+  &.stroke {
+    fill: none;
+
+    &.fill {
+      fill: $bg-color-darker;
+      stroke: $bg-color-lighter;
+    }
+  }
 }
 
-path:nth-last-of-type(4).series {
-  fill: $chart-fill;
-  stroke: none;
-  stroke-width: 0;
+.stroke {
+  &.ok {
+    stroke: $status-color-ok;
+  }
+
+  &.warning {
+    stroke: $status-color-warning;
+  }
+
+  &.error {
+    stroke: $status-color-error;
+  }
 }
 
-text.legend {
-  fill: $fg-color-normal;
-  font-size: 10.2px;
-  stroke: none;
-  stroke-width: 0;
-}
+.fill {
+  $transparentize-value: .7;
+  &.ok {
+    fill: transparentize($status-color-ok, $transparentize-value);
+  }
 
-path.legend {
-  stroke-width: 1;
-}
+  &.warning {
+    fill: transparentize($status-color-warning, $transparentize-value);
+  }
 
-path:nth-last-of-type(1).legend {
-  fill: none;
-  stroke: $chart-stroke;
-}
-
-path:nth-last-of-type(2).legend {
-  fill: $bg-color-darker;
-  stroke: $bg-color-lighter;
+  &.error {
+    fill: transparentize($status-color-error, $transparentize-value);
+  }
 }

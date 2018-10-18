@@ -15,6 +15,7 @@ require (
 	github.com/golang/freetype v0.0.0-20170609003504-e2365dfdc4a0 // indirect
 	github.com/golang/protobuf v1.2.0 // indirect
 	github.com/gomodule/redigo v2.0.0+incompatible // indirect
+	github.com/hashworks/go-chart v2.0.2-0.20181012215714-9fd7836f84d7+incompatible
 	github.com/influxdata/influxdb v1.6.3
 	github.com/json-iterator/go v1.1.5 // indirect
 	github.com/kr/pretty v0.1.0 // indirect
@@ -28,7 +29,7 @@ require (
 	github.com/ugorji/go/codec v0.0.0-20180831062425-e253f1f20942 // indirect
 	github.com/unrolled/secure v0.0.0-20180914162101-439d7b25425f
 	github.com/urfave/cli v1.20.0
-	github.com/wcharczuk/go-chart v2.0.2-0.20181012164330-3cb33d48d32d+incompatible
+	github.com/wcharczuk/go-chart v2.0.1+incompatible
 	golang.org/x/image v0.0.0-20180708004352-c73c2afc3b81 // indirect
 	golang.org/x/net v0.0.0-20180926154720-4dfa2610cdf3
 	golang.org/x/sync v0.0.0-20180314180146-1d60e4601c6f // indirect

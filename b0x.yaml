@@ -7,5 +7,10 @@ custom:
     - "./img"
     - "./static"
     - "./templates"
-    - "./sass/main.css"
-    - "./sass/chart.css"
+
+  - files:
+    - "./sass"
+    exclude:
+      - "*.scss"
+    base: "sass"
+    prefix: "css"
