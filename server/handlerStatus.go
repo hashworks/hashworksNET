@@ -7,7 +7,6 @@ import (
 	"github.com/go-errors/errors"
 	"github.com/hashworks/go-chart"
 	"github.com/influxdata/influxdb/client/v2"
-	"github.com/unrolled/secure"
 	"github.com/wcharczuk/go-chart/drawing"
 	"log"
 	"net/http"
@@ -165,7 +164,6 @@ func (s *Server) handlerStatus(c *gin.Context) {
 	c.HTML(http.StatusOK, "status", gin.H{
 		"Title":         "status",
 		"Description":   "Status information.",
-		"Nonce":         secure.CSPNonce(c),
 		"StatusTab":     true,
 		"PageStartTime": pageStartTime,
 		"Services":      services,
