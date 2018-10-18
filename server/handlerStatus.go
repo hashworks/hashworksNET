@@ -5,8 +5,9 @@ import (
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/go-errors/errors"
+	"github.com/hashworks/go-chart"
 	"github.com/influxdata/influxdb/client/v2"
-	"github.com/wcharczuk/go-chart"
+	"github.com/unrolled/secure"
 	"github.com/wcharczuk/go-chart/drawing"
 	"log"
 	"net/http"
@@ -14,18 +15,165 @@ import (
 	"time"
 )
 
-var svgDimensions = [][]int{
-	{1940, 1000},
-	{1700, 650},
-	{1380, 450},
-	{1145, 350},
-	{780, 350},
-	{500, 335},
-	{400, 225},
+var svgBPMDimensions = [][]int{
+	{1940, 300},
+	{1700, 300},
+	{1380, 300},
+	{1145, 300},
+	{980, 300},
+	{780, 300},
+	{580, 300},
+	{380, 200},
 	{200, 115},
 }
 
-func (s *Server) handlerStatusSVG(width, height int) func(*gin.Context) {
+var svgLoadDimensions = [][]int{
+	{800, 200},
+	{620, 200},
+	{520, 200},
+	{440, 200},
+	{750, 200},
+	{600, 200},
+	{380, 200},
+	{200, 115},
+}
+
+type Service struct {
+	Name    string
+	Status  string
+	Message string
+}
+
+type Load struct {
+	Status string
+	Value  float64
+}
+
+func (s *Server) handlerStatus(c *gin.Context) {
+	pageStartTime := time.Now()
+
+	influxConfig := client.HTTPConfig{
+		Addr:      s.config.InfluxAddress,
+		UserAgent: "hashworksNET/" + s.config.Version,
+	}
+	if s.config.InfluxUsername != "" && s.config.InfluxPassword != "" {
+		influxConfig.Username = s.config.InfluxUsername
+		influxConfig.Password = s.config.InfluxPassword
+	}
+	httpClient, err := client.NewHTTPClient(influxConfig)
+	defer httpClient.Close()
+
+	if err != nil {
+		s.recoveryHandlerStatus(http.StatusBadGateway, c, err)
+		return
+	}
+
+	q := client.Query{
+		Command: "SELECT last(*) FROM net_response WHERE port = '32400' AND protocol='tcp' AND time > now() - 2m;" +
+			"SELECT last(*) FROM net_response WHERE port = '6697' AND protocol='tcp' AND time > now() - 2m;" +
+			fmt.Sprintf("SELECT last(load1), last(load5), last(load15) FROM system WHERE host = '%s' AND time > now() - 2m", s.config.InfluxLoadHost),
+		Database:  "telegraf",
+		Precision: "s",
+	}
+
+	resp, err := httpClient.Query(q)
+
+	// I've done some testing here, the InfluxDB query alone takes 30-100ms, the rest are peanuts.
+
+	if err != nil {
+		s.recoveryHandlerStatus(http.StatusBadGateway, c, err)
+		return
+	}
+
+	if len(resp.Results) != 3 {
+		s.recoveryHandlerStatus(http.StatusInternalServerError, c, errors.New("InfluxDB query failed."))
+		return
+	}
+
+	var services []Service
+	for id, name := range []string{"Plex", "ZNC"} {
+		values := resp.Results[id].Series[0].Values
+		newService := Service{name, "error", "No data!"}
+		if len(values) == 1 && len(values[0]) == 4 {
+			result, ok := values[0][3].(string)
+			if !ok {
+				s.recoveryHandlerStatus(http.StatusInternalServerError, c, errors.New("Failed to cast JSON result into string"))
+				return
+			}
+
+			responseTime, err := values[0][1].(json.Number).Float64()
+			if err != nil {
+				s.recoveryHandlerStatus(http.StatusInternalServerError, c, err)
+				return
+			}
+
+			resultCode, err := values[0][2].(json.Number).Int64()
+			if err != nil {
+				s.recoveryHandlerStatus(http.StatusInternalServerError, c, err)
+				return
+			}
+
+			if resultCode != 0 {
+				newService.Status = "error"
+			} else if responseTime >= 0.2 {
+				newService.Status = "warning"
+			} else {
+				newService.Status = "ok"
+			}
+
+			if result == "success" {
+				newService.Message = fmt.Sprintf("Online. %.02fs reponse time.", responseTime)
+			} else {
+				newService.Message = fmt.Sprintf("%s.", strings.Title(result))
+			}
+
+		}
+		services = append(services, newService)
+	}
+
+	var loads []Load
+	values := resp.Results[2].Series[0].Values
+	if len(values) == 1 && len(values[0]) == 4 {
+		for id := 0; id < 3; id++ {
+			load := values[0][id+1]
+
+			if data, ok := load.(json.Number); ok {
+				value, err := data.Float64()
+				if err != nil {
+					s.recoveryHandlerStatus(http.StatusInternalServerError, c, err)
+					return
+				}
+
+				var status string
+				if value >= 8 {
+					status = "error"
+				} else if value >= 4 {
+					status = "warning"
+				} else {
+					status = "ok"
+				}
+
+				loads = append(loads, Load{
+					Value:  value,
+					Status: status,
+				})
+			}
+		}
+	}
+
+	c.Header("Cache-Control", "max-age=60")
+	c.HTML(http.StatusOK, "status", gin.H{
+		"Title":         "status",
+		"Description":   "Status information.",
+		"Nonce":         secure.CSPNonce(c),
+		"StatusTab":     true,
+		"PageStartTime": pageStartTime,
+		"Services":      services,
+		"Loads":         loads,
+	})
+}
+
+func (s *Server) handlerBPMSVG(width, height int) func(*gin.Context) {
 	return func(c *gin.Context) {
 		influxConfig := client.HTTPConfig{
 			Addr:      s.config.InfluxAddress,
@@ -44,7 +192,7 @@ func (s *Server) handlerStatusSVG(width, height int) func(*gin.Context) {
 		}
 
 		q := client.Query{
-			Command:   "SELECT mean(value) FROM bpm WHERE host = '" + s.config.InfluxHost + "' AND time > now() - 12h GROUP BY time(5m)",
+			Command:   "SELECT mean(value) FROM bpm WHERE host = '" + s.config.InfluxBPMHost + "' AND time > now() - 12h GROUP BY time(5m)",
 			Database:  "body",
 			Precision: "s",
 		}
@@ -73,15 +221,29 @@ func (s *Server) handlerStatusSVG(width, height int) func(*gin.Context) {
 		timeSeries := chart.TimeSeries{
 			Name: "BPM",
 			Style: chart.Style{
-				ClassName: "series",
 				Show:      true,
+				ClassName: "series",
 				FillColor: drawing.ColorBlack, // Dummy-Fill so go-chart produces the fill-paths
 			},
 			XValues: []time.Time{},
 			YValues: []float64{},
 		}
 
-		for i := 0; i < len(resp.Results[0].Series[0].Values); i++ {
+		var max float64
+		avg := 0
+		count := 0 // Since len(…) could be wrong
+
+		length := len(resp.Results[0].Series[0].Values)
+
+		// Get last time
+		timestamp, err := resp.Results[0].Series[0].Values[length-1][0].(json.Number).Int64()
+		if err != nil {
+			s.recoveryHandler(c, err)
+			return
+		}
+		lastBPMTime := time.Unix(timestamp, 0)
+
+		for i := 0; i < length; i++ {
 			if len(resp.Results[0].Series[0].Values[i]) == 0 || resp.Results[0].Series[0].Values[i][0] == nil || resp.Results[0].Series[0].Values[i][1] == nil {
 				continue
 			}
@@ -91,7 +253,8 @@ func (s *Server) handlerStatusSVG(width, height int) func(*gin.Context) {
 				s.recoveryHandler(c, err)
 				return
 			}
-			timeSeries.XValues = append(timeSeries.XValues, time.Unix(timestamp, 0))
+			bpmTime := time.Unix(timestamp, 0)
+			timeSeries.XValues = append(timeSeries.XValues, bpmTime)
 
 			bpm, err := resp.Results[0].Series[0].Values[i][1].(json.Number).Float64()
 			if err != nil {
@@ -99,27 +262,57 @@ func (s *Server) handlerStatusSVG(width, height int) func(*gin.Context) {
 				return
 			}
 			timeSeries.YValues = append(timeSeries.YValues, bpm)
+			if bpm > max {
+				max = bpm
+			}
+
+			// Only calculate average of last hour
+			if bpmTime.Add(time.Hour).After(lastBPMTime) {
+				avg += int(bpm)
+				count++
+			}
 		}
+
+		if count != 0 {
+			avg /= count
+		} else {
+			avg = 0
+		}
+
+		var statusClass string
+		if avg >= 130 {
+			statusClass = "error"
+		} else if avg >= 100 {
+			statusClass = "warning"
+		} else if avg >= 40 {
+			statusClass = "ok"
+		} else if avg >= 30 {
+			statusClass = "warning"
+		} else {
+			statusClass = "error"
+		}
+		timeSeries.Style.ClassName += " " + statusClass
 
 		graph := chart.Chart{
 			Height: int(height),
 			Width:  int(width),
 			Background: chart.Style{
-				ClassName: "background",
+				ClassName: "bg",
 			},
 			Canvas: chart.Style{
-				ClassName: "canvas",
+				ClassName: "bg",
 			},
 			XAxis: chart.XAxis{
 				Style: chart.Style{
-					ClassName: "xaxis",
+					ClassName: "axis",
 					Show:      true,
 				},
 				ValueFormatter: chart.TimeValueFormatterWithFormat("15:04"),
 			},
 			YAxis: chart.YAxis{
+				Range: &chart.ContinuousRange{Min: 0, Max: max},
 				Style: chart.Style{
-					ClassName: "yaxis",
+					ClassName: "axis",
 					Show:      true,
 				},
 				ValueFormatter: chart.IntValueFormatter,
@@ -129,7 +322,7 @@ func (s *Server) handlerStatusSVG(width, height int) func(*gin.Context) {
 
 		graph.Elements = []chart.Renderable{
 			chart.Legend(&graph, chart.Style{
-				ClassName: "legend",
+				ClassName: "legend " + statusClass,
 			}),
 		}
 
@@ -138,6 +331,147 @@ func (s *Server) handlerStatusSVG(width, height int) func(*gin.Context) {
 
 		if err := graph.Render(chart.SVGWithCSS(s.chartCSS, ""), c.Writer); err != nil {
 			log.Printf("%s - Error: %s", time.Now().Format(time.RFC3339), err.Error())
+			c.AbortWithStatus(500)
+			return
+		}
+
+		c.Status(200)
+	}
+}
+
+func (s *Server) handlerLoadSVG(width, height int) func(*gin.Context) {
+	return func(c *gin.Context) {
+		influxConfig := client.HTTPConfig{
+			Addr:      s.config.InfluxAddress,
+			UserAgent: "hashworksNET/" + s.config.Version,
+		}
+		if s.config.InfluxUsername != "" && s.config.InfluxPassword != "" {
+			influxConfig.Username = s.config.InfluxUsername
+			influxConfig.Password = s.config.InfluxPassword
+		}
+		httpClient, err := client.NewHTTPClient(influxConfig)
+		defer httpClient.Close()
+
+		if err != nil {
+			s.recoveryHandlerStatus(http.StatusBadGateway, c, err)
+			return
+		}
+
+		q := client.Query{
+			Command:   fmt.Sprintf("SELECT load1 FROM system WHERE host = '%s' AND time > now() - 1h", s.config.InfluxLoadHost),
+			Database:  "telegraf",
+			Precision: "s",
+		}
+
+		resp, err := httpClient.Query(q)
+
+		if err != nil {
+			s.recoveryHandlerStatus(http.StatusBadGateway, c, err)
+			return
+		}
+
+		if len(resp.Results) == 0 {
+			s.recoveryHandlerStatus(http.StatusInternalServerError, c, errors.New("InfluxDB query failed."))
+			return
+		}
+
+		if len(resp.Results[0].Series) == 0 || len(resp.Results[0].Series[0].Values) <= 2 || len(resp.Results[0].Series[0].Values[0]) < 2 {
+			messageSVG(c, "Not enough load data collected in the last hour to draw a graph.", width)
+			return
+		}
+
+		if s.config.Debug {
+			log.Println(resp.Results[0].Series[0].Values)
+		}
+		short := chart.TimeSeries{
+			Name: "Short",
+			Style: chart.Style{
+				Show:      true,
+				ClassName: "series",
+				FillColor: drawing.ColorBlack, // Dummy-Fill so go-chart produces the fill-paths
+			},
+			XValues: []time.Time{},
+			YValues: []float64{},
+		}
+
+		var max float64
+		avg := 0
+		count := 0 // Since len(…) could be wrong
+
+		for _, values := range resp.Results[0].Series[0].Values {
+			timeInt, err := values[0].(json.Number).Int64()
+			if err != nil {
+				s.recoveryHandlerStatus(http.StatusInternalServerError, c, err)
+				return
+			}
+			timestamp := time.Unix(timeInt, 0)
+			load, err := values[1].(json.Number).Float64()
+			if err != nil {
+				s.recoveryHandlerStatus(http.StatusInternalServerError, c, err)
+				return
+			}
+
+			short.XValues = append(short.XValues, timestamp)
+			short.YValues = append(short.YValues, load)
+
+			if load > max {
+				max = load
+			}
+
+			avg += int(load)
+			count++
+		}
+		avg /= count
+
+		var statusClass string
+		if avg >= 8 {
+			statusClass = "error"
+		} else if avg >= 4 {
+			statusClass = "warning"
+		} else {
+			statusClass = "ok"
+		}
+		short.Style.ClassName += " " + statusClass
+
+		graph := chart.Chart{
+			Height: int(height),
+			Width:  int(width),
+			Background: chart.Style{
+				ClassName: "bg",
+			},
+			Canvas: chart.Style{
+				ClassName: "bg",
+			},
+			XAxis: chart.XAxis{
+				Style: chart.Style{
+					ClassName: "axis",
+					Show:      true,
+				},
+				ValueFormatter: chart.TimeValueFormatterWithFormat("15:04"),
+			},
+			YAxis: chart.YAxis{
+				Range: &chart.ContinuousRange{Min: 0, Max: max},
+				Style: chart.Style{
+					ClassName: "axis",
+					Show:      true,
+				},
+				ValueFormatter: chart.FloatValueFormatter,
+			},
+			Series: []chart.Series{short},
+		}
+
+		graph.Elements = []chart.Renderable{
+			chart.Legend(&graph, chart.Style{
+				ClassName: "legend " + statusClass,
+			}),
+		}
+
+		c.Header("Content-Type", "image/svg+xml")
+		c.Header("Cache-Control", "max-age=600")
+		c.Header("Content-Security-Policy", s.getCSP(false)) // Our SVGs require inline CSS
+
+		if err := graph.Render(chart.SVGWithCSS(s.chartCSS, ""), c.Writer); err != nil {
+			log.Println(err)
 			c.AbortWithStatus(500)
 			return
 		}
@@ -181,16 +515,4 @@ func messageSVG(c *gin.Context, message string, width int) {
 		`<rect width="100%%" height="100%%" fill="#272727"/>`+
 		`<text x="0" y="0" fill="white" font-size="24" font-family="sans-serif">%s</text>`+
 		`</svg>`, width, height, strings.Join(messages, "")))
-}
-
-func (s *Server) handlerStatus(c *gin.Context) {
-	pageStartTime := time.Now()
-
-	c.Header("Cache-Control", "max-age=600")
-	c.HTML(http.StatusOK, "status", gin.H{
-		"Title":         "status",
-		"Description":   "Status information.",
-		"StatusTab":     true,
-		"PageStartTime": pageStartTime,
-	})
 }

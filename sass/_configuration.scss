@@ -5,8 +5,9 @@ $bg-color-darker: #272727;
 $bg-color-header: #222;
 $shadow-color: rgba(#000, .26);
 
-$chart-stroke: rgba(255,0,0,1.0);
-$chart-fill: rgba(255,0,0,0.3);
+$status-color-ok: #065535;
+$status-color-error: #800000;
+$status-color-warning: #996000;
 
 $small-screen-max-width: 720px;
 

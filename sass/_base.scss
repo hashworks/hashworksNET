@@ -24,7 +24,7 @@ a:active {
 }
 
 ::selection {
-  background: $fg-color-normal;
+  background: $bg-color-lighter;
 }
 
 svg {
@@ -129,13 +129,21 @@ footer {
     margin-top: $content-spacing;
     min-height: 250px;
     padding: $content-spacing;
+    position: relative;
     width: 440px;
 
-    //.tag {
-    //  float: right;
-    //  margin-right: 10px;
-    //  margin-top: 3px;
-    //}
+    .tag {
+      opacity: .6;
+      position: absolute;
+      right: $content-spacing;
+      text-transform: uppercase;
+      top: $content-spacing;
+    }
+
+    .tag:hover {
+      cursor: default;
+      opacity: 1;
+    }
 
     &.full {
       flex-grow: 2;
@@ -151,6 +159,21 @@ footer {
     a:active,
     a:hover {
       color: $fg-color-normal;
+    }
+
+    h1 {
+      margin-bottom: 20px;
+      text-transform: capitalize;
+    }
+
+    h2,
+    h3,
+    h4,
+    h5,
+    h6 {
+      margin-bottom: 10px;
+      margin-top: 20px;
+      text-transform: capitalize;
     }
   }
 }

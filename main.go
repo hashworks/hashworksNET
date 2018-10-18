@@ -61,11 +61,18 @@ func main() {
 			Destination: &config.GZIPExtension,
 		},
 		cli.StringFlag{
-			EnvVar:      "HWNET_INFLUX_HOST",
-			Name:        "influxHost",
-			Usage:       "InfluxDB measurements host",
+			EnvVar:      "HWNET_INFLUX_BPM_HOST",
+			Name:        "influxBPMHost",
+			Usage:       "InfluxDB BPM measurements host",
 			Value:       "Justin Kromlinger",
-			Destination: &config.InfluxHost,
+			Destination: &config.InfluxBPMHost,
+		},
+		cli.StringFlag{
+			EnvVar:      "HWNET_INFLUX_LOAD_HOST",
+			Name:        "influxLoadHost",
+			Usage:       "InfluxDB load measurements host",
+			Value:       "hive",
+			Destination: &config.InfluxLoadHost,
 		},
 		cli.StringFlag{
 			EnvVar:      "HWNET_INFLUX_ADDRESS",

@@ -35,7 +35,8 @@ type Config struct {
 	GZIPExtension  bool
 	Debug          bool
 	Domain         string
-	InfluxHost     string
+	InfluxBPMHost  string
+	InfluxLoadHost string
 	InfluxAddress  string
 	InfluxUsername string
 	InfluxPassword string
@@ -89,9 +90,13 @@ func NewServer(config Config) (Server, error) {
 	})
 
 	s.Router.GET("/", s.cacheHandler(true, false, s.store, 10*time.Minute, s.handlerIndex))
-	s.Router.GET("/status", s.cacheHandler(true, false, s.store, 10*time.Minute, s.handlerStatus))
-	for _, dimension := range svgDimensions {
-		s.Router.GET(fmt.Sprintf("/status-%dx%d.svg", dimension[0], dimension[1]), s.cacheHandler(true, false, s.store, 10*time.Minute, s.handlerStatusSVG(dimension[0], dimension[1])))
+	s.Router.GET("/status", s.cacheHandler(true, false, s.store, time.Minute, s.handlerStatus))
+	for _, dimension := range svgBPMDimensions {
+		s.Router.GET(fmt.Sprintf("/bpm-%dx%d.svg", dimension[0], dimension[1]), s.cacheHandler(true, false, s.store, 10*time.Minute, s.handlerBPMSVG(dimension[0], dimension[1])))
+
+	}
+	for _, dimension := range svgLoadDimensions {
+		s.Router.GET(fmt.Sprintf("/load-%dx%d.svg", dimension[0], dimension[1]), s.cacheHandler(true, false, s.store, 10*time.Minute, s.handlerLoadSVG(dimension[0], dimension[1])))
 
 	}
 	s.Router.NoRoute(s.cacheHandler(true, false, s.store, 10*time.Minute, func(c *gin.Context) {
@@ -105,7 +110,7 @@ func NewServer(config Config) (Server, error) {
 }
 
 func testConfig(c *Config) error {
-	if c.InfluxHost == "" {
+	if c.InfluxBPMHost == "" {
 		return errors.New("Influx host cannot be empty.")
 	}
 	if c.InfluxAddress == "" {
