@@ -149,7 +149,7 @@ func TestAcception(t *testing.T) {
 	// Check article
 	article := page.FindByXPath("//article[@class='card full']")
 
-	articleHeader, err := article.FindByXPath("//h3").Text()
+	articleHeader, err := article.FindByXPath("//h1").Text()
 	if !assert.NoError(t, err) {
 		t.FailNow()
 	}
@@ -178,6 +178,8 @@ func TestAcception(t *testing.T) {
 	// STATUS PAGE CHECK
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+	var statusBackgroundImages []string
+
 	// Click status, should navigate to /status and title should be /status as well
 	if !assert.NoError(t, page.FindByLink("status").Click()) {
 		t.FailNow()
@@ -195,44 +197,106 @@ func TestAcception(t *testing.T) {
 	assert.Equal(t, title, "/home/hashworks/status")
 
 	// Check article
-	article = page.FindByXPath("//article[@class='card full']")
 
-	articleHeader, err = article.FindByXPath("//h3").Text()
+	articles := page.AllByXPath("//article[contains(@class, 'card')]")
+	articleCount, err := articles.Count()
 	if !assert.NoError(t, err) {
 		t.FailNow()
 	}
-	assert.Equal(t, articleHeader, "Heart-rate")
+	assert.Equal(t, 3, articleCount)
 
-	statusBackgroundImage, err := article.FindByXPath("//div[@class='status-svg']/div").CSS("background-image")
-	if !assert.NoError(t, err) {
-		t.FailNow()
-	}
-	if !assert.True(t, strings.HasPrefix(statusBackgroundImage, `url("`)) {
-		t.FailNow()
-	}
+	for i := 0; i < articleCount; i++ {
+		article := articles.At(i)
 
-	statusBackgroundImage = strings.Split(statusBackgroundImage, `"`)[1]
+		articleHeader, err = article.FindByXPath("h1").Text()
+		if !assert.NoError(t, err) {
+			t.FailNow()
+		}
+		articleTag, err := article.FindByXPath("div[@class='tag']").Text()
+		if !assert.NoError(t, err) {
+			t.FailNow()
+		}
+
+		if i == 1 {
+			assert.Equal(t, "Public Services", articleHeader)
+			assert.Equal(t, "HIVE", articleTag)
+
+			articleSubHeaders := article.AllByXPath("h4")
+			articleSubHeadersCount, err := articleSubHeaders.Count()
+			if !assert.NoError(t, err) {
+				t.FailNow()
+			}
+			assert.Equal(t, 2, articleSubHeadersCount)
+
+			for i := 0; i < articleSubHeadersCount; i++ {
+				articleSubHeader := articleSubHeaders.At(i)
+				articleSubHeaderText, err := articleSubHeader.Text()
+				if !assert.NoError(t, err) {
+					t.FailNow()
+				}
+				if i == 0 {
+					assert.Equal(t, "Plex:", articleSubHeaderText)
+				} else if i == 1 {
+					assert.Equal(t, "ZNC:", articleSubHeaderText)
+				}
+			}
+
+			serviceStatusDivs := article.AllByXPath("div[contains(@class, 'status')]")
+			serviceStatusDivsCount, err := serviceStatusDivs.Count()
+			if !assert.NoError(t, err) {
+				t.FailNow()
+			}
+			assert.Equal(t, 2, serviceStatusDivsCount)
+		} else {
+			if i == 0 || i == 2 {
+				var class string
+				if i == 0 {
+					class = "load"
+					assert.Equal(t, articleHeader, "Server Load")
+					assert.Equal(t, "HIVE", articleTag)
+				} else if i == 2 {
+					class = "bpm"
+					assert.Equal(t, articleHeader, "Heart-Rate")
+					assert.Equal(t, "WALKER", articleTag)
+				}
+
+				backgroundImage, err := article.FindByXPath(fmt.Sprintf("div[@class='status-svg']/div[@class='%s']", class)).CSS("background-image")
+				if !assert.NoError(t, err) {
+					t.FailNow()
+				}
+				if !assert.True(t, strings.HasPrefix(backgroundImage, `url("`)) {
+					t.FailNow()
+				}
+
+				statusBackgroundImages = append(statusBackgroundImages, strings.Split(backgroundImage, `"`)[1])
+			} else {
+				t.FailNow()
+			}
+		}
+	}
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// STATUS IMAGE CHECK
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-	// Check status svg
-	resp, err = http.Get(statusBackgroundImage)
-	if assert.NoError(t, err) {
-		defer resp.Body.Close()
-		body, err := ioutil.ReadAll(resp.Body)
-		if !assert.NoError(t, err) {
-			t.FailNow()
+	// Check status graphs
+	for _, link := range statusBackgroundImages {
+		resp, err = http.Get(link)
+		if assert.NoError(t, err) {
+			defer resp.Body.Close()
+			body, err := ioutil.ReadAll(resp.Body)
+			if !assert.NoError(t, err) {
+				t.FailNow()
+			}
+			svg := string(body)
+
+			// Should be an SVG
+			assert.True(t, strings.HasPrefix(svg, "<svg"))
+
+			// Should contain some paths
+			pathRegex := regexp.MustCompile("<path")
+			matches := pathRegex.FindAllStringIndex(svg, -1)
+			assert.True(t, len(matches) >= 10)
 		}
-		svg := string(body)
-
-		// Should be an SVG
-		assert.True(t, strings.HasPrefix(svg, "<svg"))
-
-		// Should contain some paths
-		pathRegex := regexp.MustCompile("<path")
-		matches := pathRegex.FindAllStringIndex(svg, -1)
-		assert.True(t, len(matches) >= 10)
 	}
 }
