@@ -130,7 +130,7 @@ func (s *Server) handlerStatus(c *gin.Context) {
 			}
 
 			if result == "success" {
-				newService.Message = fmt.Sprintf("Online. %.02fs reponse time.", responseTime)
+				newService.Message = fmt.Sprintf("Online. %.02fs latency.", responseTime)
 			} else {
 				newService.Message = fmt.Sprintf("%s.", strings.Title(result))
 			}

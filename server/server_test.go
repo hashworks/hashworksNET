@@ -363,7 +363,7 @@ func (s *Server) statusHandlerTest(t *testing.T) {
 	assert.True(t, strings.Contains(body, `<td class="warning">5.01</td>`))
 	assert.True(t, strings.Contains(body, `<td class="error">9.34</td>`))
 	assert.True(t, strings.Contains(body, `<div class="status error">Timeout.</div>`))
-	assert.True(t, strings.Contains(body, `<div class="status ok">Online. 0.02s reponse time.</div>`))
+	assert.True(t, strings.Contains(body, `<div class="status ok">Online. 0.02s latency.</div>`))
 }
 
 func (s *Server) redirectTest(t *testing.T) {
