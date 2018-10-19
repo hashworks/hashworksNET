@@ -10,6 +10,7 @@ pipeline:
     commands:
       - sassc -p 0 -t compressed sass/main.scss sass/main.css
       - sassc -p 0 -t compressed sass/chart.scss sass/chart.css
+      - sassc -p 0 -t compressed sass/status.scss sass/status.css
 
   build:
     image: golang
