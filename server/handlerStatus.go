@@ -187,6 +187,7 @@ func (s *Server) handlerStatus(c *gin.Context) {
 
 	c.Header("Cache-Control", "max-age=60")
 	c.Header("Last-Modified", time.Now().Format(time.RFC1123))
+	c.Header("Link", "</css/status.css>; rel=preload; as=style")
 	c.HTML(http.StatusOK, "status", gin.H{
 		"Title":         "status",
 		"Description":   "Status information.",
