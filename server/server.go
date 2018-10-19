@@ -25,6 +25,7 @@ type Server struct {
 	chartCSS  string
 	cssSha256 []string
 	config    Config
+	startTime time.Time
 }
 
 type Config struct {
@@ -56,11 +57,12 @@ func NewServer(config Config) (Server, error) {
 	chartCSSSha256 := sha256.Sum256(chartCSSBytes)
 
 	s := Server{
-		Router:   gin.Default(),
-		store:    persistence.NewInMemoryStore(time.Minute),
-		css:      template.CSS(cssBytes),
-		chartCSS: string(chartCSSBytes),
-		config:   config,
+		Router:    gin.Default(),
+		store:     persistence.NewInMemoryStore(time.Minute),
+		css:       template.CSS(cssBytes),
+		chartCSS:  string(chartCSSBytes),
+		config:    config,
+		startTime: time.Now(),
 	}
 
 	s.cssSha256 = []string{

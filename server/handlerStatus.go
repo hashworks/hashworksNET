@@ -186,6 +186,7 @@ func (s *Server) handlerStatus(c *gin.Context) {
 	}
 
 	c.Header("Cache-Control", "max-age=60")
+	c.Header("Last-Modified", time.Now().Format(time.RFC1123))
 	c.HTML(http.StatusOK, "status", gin.H{
 		"Title":         "status",
 		"Description":   "Status information.",
@@ -199,6 +200,7 @@ func (s *Server) handlerStatus(c *gin.Context) {
 func (s *Server) drawChart(c *gin.Context, graph chart.Chart) {
 	c.Header("Content-Type", chart.ContentTypeSVG)
 	c.Header("Cache-Control", "max-age=600")
+	c.Header("Last-Modified", time.Now().Format(time.RFC1123))
 
 	if err := graph.Render(chart.SVGWithCSS(s.chartCSS, ""), c.Writer); err != nil {
 		log.Printf("%s - Error: %s", time.Now().Format(time.RFC3339), err.Error())
