@@ -61,7 +61,7 @@ func (s *Server) queryInfluxDB(c *gin.Context, command, db string) *client.Respo
 	defer httpClient.Close()
 
 	if err != nil {
-		s.recoveryHandlerStatus(http.StatusBadGateway, c, err)
+		s.recoveryHandlerStatus(http.StatusInternalServerError, c, err)
 		return nil
 	}
 
@@ -83,6 +83,10 @@ func (s *Server) queryInfluxDB(c *gin.Context, command, db string) *client.Respo
 		return nil
 	}
 
+	if s.config.Debug {
+		log.Println(resp)
+	}
+
 	return resp
 }
 
@@ -92,79 +96,91 @@ func (s *Server) handlerStatus(c *gin.Context) {
 	resp := s.queryInfluxDB(c, "SELECT last(*) FROM net_response WHERE port = '32400' AND protocol='tcp' AND time > now() - 2m;"+
 		"SELECT last(*) FROM net_response WHERE port = '6697' AND protocol='tcp' AND time > now() - 2m;"+
 		fmt.Sprintf("SELECT last(load1), last(load5), last(load15) FROM system WHERE host = '%s' AND time > now() - 2m", s.config.InfluxLoadHost), "telegraf")
-
-	if len(resp.Results) != 3 {
-		s.recoveryHandlerStatus(http.StatusInternalServerError, c, errors.New("InfluxDB query failed."))
+	if resp == nil {
 		return
 	}
 
-	var services []Service
-	for id, name := range []string{"Plex", "ZNC"} {
-		values := resp.Results[id].Series[0].Values
-		newService := Service{name, "error", "No data!"}
-		if len(values) == 1 && len(values[0]) == 4 {
-			result, ok := values[0][3].(string)
-			if !ok {
-				s.recoveryHandlerStatus(http.StatusInternalServerError, c, errors.New("Failed to cast JSON result into string"))
-				return
-			}
-
-			responseTime, err := values[0][1].(json.Number).Float64()
-			if err != nil {
-				s.recoveryHandlerStatus(http.StatusInternalServerError, c, err)
-				return
-			}
-
-			resultCode, err := values[0][2].(json.Number).Int64()
-			if err != nil {
-				s.recoveryHandlerStatus(http.StatusInternalServerError, c, err)
-				return
-			}
-
-			if resultCode != 0 {
-				newService.Status = "error"
-			} else if responseTime >= 0.2 {
-				newService.Status = "warning"
-			} else {
-				newService.Status = "ok"
-			}
-
-			if result == "success" {
-				newService.Message = fmt.Sprintf("Online. %.02fs latency.", responseTime)
-			} else {
-				newService.Message = fmt.Sprintf("%s.", strings.Title(result))
-			}
-
-		}
-		services = append(services, newService)
-	}
-
 	var loads []Load
-	values := resp.Results[2].Series[0].Values
-	if len(values) == 1 && len(values[0]) == 4 {
-		for id := 0; id < 3; id++ {
-			load := values[0][id+1]
+	var services []Service
 
-			if data, ok := load.(json.Number); ok {
-				value, err := data.Float64()
+	for id, result := range resp.Results {
+		if len(result.Series) != 1 {
+			continue
+		}
+
+		series := result.Series[0]
+
+		if series.Name == "net_response" {
+			var name string
+			if id == 0 {
+				name = "Plex"
+			} else {
+				name = "ZNC"
+			}
+			values := series.Values
+			newService := Service{name, "error", "No data!"}
+			if len(values) == 1 && len(values[0]) == 4 {
+				result, ok := values[0][3].(string)
+				if !ok {
+					s.recoveryHandlerStatus(http.StatusInternalServerError, c, errors.New("Failed to cast JSON result into string"))
+					return
+				}
+
+				responseTime, err := values[0][1].(json.Number).Float64()
 				if err != nil {
 					s.recoveryHandlerStatus(http.StatusInternalServerError, c, err)
 					return
 				}
 
-				var status string
-				if value >= 8 {
-					status = "error"
-				} else if value >= 4 {
-					status = "warning"
-				} else {
-					status = "ok"
+				resultCode, err := values[0][2].(json.Number).Int64()
+				if err != nil {
+					s.recoveryHandlerStatus(http.StatusInternalServerError, c, err)
+					return
 				}
 
-				loads = append(loads, Load{
-					Value:  value,
-					Status: status,
-				})
+				if resultCode != 0 {
+					newService.Status = "error"
+				} else if responseTime >= 0.2 {
+					newService.Status = "warning"
+				} else {
+					newService.Status = "ok"
+				}
+
+				if result == "success" {
+					newService.Message = fmt.Sprintf("Online. %.02fs latency.", responseTime)
+				} else {
+					newService.Message = fmt.Sprintf("%s.", strings.Title(result))
+				}
+
+			}
+			services = append(services, newService)
+		} else if series.Name == "system" {
+			if len(series.Values) == 1 && len(series.Values[0]) == 4 {
+				for i := 1; i < 4; i++ {
+					load := series.Values[0][i]
+
+					if data, ok := load.(json.Number); ok {
+						value, err := data.Float64()
+						if err != nil {
+							s.recoveryHandlerStatus(http.StatusInternalServerError, c, err)
+							return
+						}
+
+						var status string
+						if value >= 8 {
+							status = "error"
+						} else if value >= 4 {
+							status = "warning"
+						} else {
+							status = "ok"
+						}
+
+						loads = append(loads, Load{
+							Value:  value,
+							Status: status,
+						})
+					}
+				}
 			}
 		}
 	}
@@ -196,14 +212,13 @@ func (s *Server) drawChart(c *gin.Context, graph chart.Chart) {
 func (s *Server) handlerBPMSVG(width, height int) func(*gin.Context) {
 	return func(c *gin.Context) {
 		resp := s.queryInfluxDB(c, fmt.Sprintf("SELECT mean(value) FROM bpm WHERE host = '%s' AND time > now() - 12h GROUP BY time(5m)", s.config.InfluxBPMHost), "body")
-
-		if len(resp.Results[0].Series) == 0 || len(resp.Results[0].Series[0].Values) < 2 {
-			messageSVG(c, "Not enough heart-rate data collected in the last 12h to draw a graph.", width)
+		if resp == nil {
 			return
 		}
 
-		if s.config.Debug {
-			log.Println(resp.Results[0].Series[0].Values)
+		if len(resp.Results[0].Series) == 0 || len(resp.Results[0].Series[0].Values) < 2 {
+			messageSVG(c, "Not enough data collected in the last 12h to draw a graph.", width)
+			return
 		}
 
 		timeSeries := chart.TimeSeries{
@@ -221,22 +236,31 @@ func (s *Server) handlerBPMSVG(width, height int) func(*gin.Context) {
 		avg := 0
 		count := 0 // Since len(…) could be wrong
 
-		length := len(resp.Results[0].Series[0].Values)
+		series := resp.Results[0].Series[0]
+		length := len(series.Values)
 
 		// Get last time
-		timestamp, err := resp.Results[0].Series[0].Values[length-1][0].(json.Number).Int64()
-		if err != nil {
-			s.recoveryHandler(c, err)
-			return
-		}
-		lastBPMTime := time.Unix(timestamp, 0)
-
-		for i := 0; i < length; i++ {
-			if len(resp.Results[0].Series[0].Values[i]) == 0 || resp.Results[0].Series[0].Values[i][0] == nil || resp.Results[0].Series[0].Values[i][1] == nil {
+		var lastBPMTime time.Time
+		for i := length - 1; i >= 0; i-- {
+			if len(series.Values[i]) < 2 || series.Values[i][0] == nil || series.Values[i][1] == nil {
 				continue
 			}
 
-			timestamp, err := resp.Results[0].Series[0].Values[i][0].(json.Number).Int64()
+			timestamp, err := series.Values[i][0].(json.Number).Int64()
+			if err != nil {
+				s.recoveryHandler(c, err)
+				return
+			}
+			lastBPMTime = time.Unix(timestamp, 0)
+			break
+		}
+
+		for i := 0; i < length; i++ {
+			if len(series.Values[i]) < 2 || series.Values[i][0] == nil || series.Values[i][1] == nil {
+				continue
+			}
+
+			timestamp, err := series.Values[i][0].(json.Number).Int64()
 			if err != nil {
 				s.recoveryHandler(c, err)
 				return
@@ -244,7 +268,7 @@ func (s *Server) handlerBPMSVG(width, height int) func(*gin.Context) {
 			bpmTime := time.Unix(timestamp, 0)
 			timeSeries.XValues = append(timeSeries.XValues, bpmTime)
 
-			bpm, err := resp.Results[0].Series[0].Values[i][1].(json.Number).Float64()
+			bpm, err := series.Values[i][1].(json.Number).Float64()
 			if err != nil {
 				s.recoveryHandler(c, err)
 				return
@@ -263,8 +287,6 @@ func (s *Server) handlerBPMSVG(width, height int) func(*gin.Context) {
 
 		if count != 0 {
 			avg /= count
-		} else {
-			avg = 0
 		}
 
 		var statusClass string
@@ -321,14 +343,13 @@ func (s *Server) handlerBPMSVG(width, height int) func(*gin.Context) {
 func (s *Server) handlerLoadSVG(width, height int) func(*gin.Context) {
 	return func(c *gin.Context) {
 		resp := s.queryInfluxDB(c, fmt.Sprintf("SELECT load1 FROM system WHERE host = '%s' AND time > now() - 1h", s.config.InfluxLoadHost), "telegraf")
-
-		if len(resp.Results[0].Series) == 0 || len(resp.Results[0].Series[0].Values) <= 2 || len(resp.Results[0].Series[0].Values[0]) < 2 {
-			messageSVG(c, "Not enough load data collected in the last hour to draw a graph.", width)
+		if resp == nil {
 			return
 		}
 
-		if s.config.Debug {
-			log.Println(resp.Results[0].Series[0].Values)
+		if len(resp.Results[0].Series) == 0 || len(resp.Results[0].Series[0].Values) <= 2 || len(resp.Results[0].Series[0].Values[0]) < 2 {
+			messageSVG(c, "Not enough data collected in the last hour to draw a graph.", width)
+			return
 		}
 
 		short := chart.TimeSeries{

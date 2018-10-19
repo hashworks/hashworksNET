@@ -13,9 +13,18 @@ import (
 )
 
 var influxAddressBPMData,
+	influxAddressBPMDataErrorHigh,
+	influxAddressBPMDataWarningHigh,
+	influxAddressBPMDataWarningLow,
+	influxAddressBPMDataErrorLow,
+	influxAddressBPMNotEnoughData,
+
 	influxAddressLoadData,
+	influxAddressLoadDataWarning,
+	influxAddressLoadDataError,
+
 	influxAddressStatusData,
-	influxAddressNotEnoughData,
+
 	influxAddressNoData,
 	influxAddressFailure,
 	influxAddressUnauthorized string
@@ -93,6 +102,71 @@ func emulateInflux() {
    ]
 }`))
 	})
+	for name, avg := range map[string]int{"ErrorHigh": 130, "WarningHigh": 100, "WarningLow": 30, "ErrorLow": 20} {
+		name, avg := name, avg // Copy value for closure
+		http.HandleFunc(fmt.Sprintf("/bpmData%s/query", name), func(w http.ResponseWriter, _ *http.Request) {
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusOK)
+			w.Write([]byte(fmt.Sprintf(`{
+   "results" : [
+      {
+         "statement_id" : 0,
+         "series" : [
+            {
+               "name" : "bpm",
+               "values" : [
+                  [
+                     1537844700,
+                     %d
+                  ],
+                  [
+                     1537845000,
+                     %d
+                  ],
+                  [
+                     1537845300,
+                     %d
+                  ]
+               ],
+               "columns" : [
+                  "time",
+                  "mean"
+               ]
+            }
+         ]
+      }
+   ]
+}`, avg, avg, avg)))
+		})
+	}
+	http.HandleFunc("/bpmNotEnoughData/query", func(w http.ResponseWriter, _ *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte(`
+{
+   "results" : [
+      {
+         "statement_id" : 0,
+         "series" : [
+            {
+               "name" : "bpm",
+               "values" : [
+                  [
+                     1537844700,
+                     85
+                  ]
+               ],
+               "columns" : [
+                  "time",
+                  "mean"
+               ]
+            }
+         ]
+      }
+   ]
+}`))
+	})
+
 	http.HandleFunc("/loadData/query", func(w http.ResponseWriter, _ *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
@@ -143,6 +217,44 @@ func emulateInflux() {
   ]
 }`))
 	})
+	for name, avg := range map[string]int{"Error": 8, "Warning": 4} {
+		name, avg := name, avg // Copy value for closure
+		http.HandleFunc(fmt.Sprintf("/loadData%s/query", name), func(w http.ResponseWriter, _ *http.Request) {
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusOK)
+			w.Write([]byte(fmt.Sprintf(`{
+  "results": [
+    {
+      "statement_id": 0,
+      "series": [
+        {
+          "name": "system",
+          "columns": [
+            "time",
+            "load1"
+          ],
+          "values": [
+            [
+              1439837470,
+              %d
+            ],
+            [
+              1439837480,
+              %d
+            ],
+            [
+              1439837490,
+              %d
+            ]
+          ]
+        }
+      ]
+    }
+  ]
+}`, avg, avg, avg)))
+		})
+	}
+
 	http.HandleFunc("/statusData/query", func(w http.ResponseWriter, _ *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
@@ -218,33 +330,7 @@ func emulateInflux() {
   ]
 }`))
 	})
-	http.HandleFunc("/notEnoughData/query", func(w http.ResponseWriter, _ *http.Request) {
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusOK)
-		w.Write([]byte(`
-{
-   "results" : [
-      {
-         "statement_id" : 0,
-         "series" : [
-            {
-               "name" : "bpm",
-               "values" : [
-                  [
-                     1537844700,
-                     85
-                  ]
-               ],
-               "columns" : [
-                  "time",
-                  "mean"
-               ]
-            }
-         ]
-      }
-   ]
-}`))
-	})
+
 	http.HandleFunc("/failure/query", func(w http.ResponseWriter, _ *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
@@ -283,9 +369,18 @@ func emulateInflux() {
 
 	influxAddress := "http://" + listener.Addr().String()
 	influxAddressBPMData = influxAddress + "/bpmData"
+	influxAddressBPMDataErrorHigh = influxAddress + "/bpmDataErrorHigh"
+	influxAddressBPMDataWarningHigh = influxAddress + "/bpmDataWarningHigh"
+	influxAddressBPMDataWarningLow = influxAddress + "/bpmDataWarningLow"
+	influxAddressBPMDataErrorLow = influxAddress + "/bpmDataErrorLow"
+	influxAddressBPMNotEnoughData = influxAddress + "/bpmNotEnoughData"
+
 	influxAddressLoadData = influxAddress + "/loadData"
+	influxAddressLoadDataWarning = influxAddress + "/loadDataWarning"
+	influxAddressLoadDataError = influxAddress + "/loadDataError"
+
 	influxAddressStatusData = influxAddress + "/statusData"
-	influxAddressNotEnoughData = influxAddress + "/notEnoughData"
+
 	influxAddressNoData = influxAddress + "/noData"
 	influxAddressFailure = influxAddress + "/failure"
 	influxAddressUnauthorized = influxAddress + "/unauthorized"
@@ -434,6 +529,7 @@ func TestBPMSVG(t *testing.T) {
 		InfluxPassword: "bar",
 		GinMode:        gin.TestMode,
 		GZIPExtension:  true,
+		Debug:          true,
 	})
 	assert.NoError(t, err)
 	for _, dimension := range svgBPMDimensions {
@@ -448,6 +544,38 @@ func TestBPMSVG(t *testing.T) {
 	}
 }
 
+func TestBPMWarningErrorSVG(t *testing.T) {
+	for address, status := range map[string]string{
+		influxAddressBPMDataErrorHigh:   "error",
+		influxAddressBPMDataWarningHigh: "warning",
+		influxAddressBPMDataWarningLow:  "warning",
+		influxAddressBPMDataErrorLow:    "error",
+	} {
+		s, err := NewServer(Config{
+			TLSProxy:       true,
+			InfluxAddress:  address,
+			InfluxBPMHost:  "Max Mustermann",
+			InfluxUsername: "foo",
+			InfluxPassword: "bar",
+			GinMode:        gin.TestMode,
+			GZIPExtension:  true,
+			Debug:          true,
+		})
+		assert.NoError(t, err)
+		for _, dimension := range svgBPMDimensions {
+			w := httptest.NewRecorder()
+			req, _ := http.NewRequest("GET", fmt.Sprintf("/bpm-%dx%d.svg", dimension[0], dimension[1]), nil)
+			s.Router.ServeHTTP(w, req)
+
+			assert.Equal(t, 200, w.Code)
+			assert.Equal(t, "image/svg+xml", w.Header().Get("Content-Type"))
+			assert.True(t, strings.HasPrefix(w.Body.String(), "<svg xmlns"))
+			assert.True(t, strings.HasSuffix(w.Body.String(), "</svg>"))
+			assert.True(t, strings.Contains(w.Body.String(), `class="series `+status))
+		}
+	}
+}
+
 func TestLoadSVG(t *testing.T) {
 	s, err := NewServer(Config{
 		TLSProxy:       true,
@@ -457,6 +585,7 @@ func TestLoadSVG(t *testing.T) {
 		InfluxPassword: "bar",
 		GinMode:        gin.TestMode,
 		GZIPExtension:  true,
+		Debug:          true,
 	})
 	assert.NoError(t, err)
 	for _, dimension := range svgLoadDimensions {
@@ -471,6 +600,35 @@ func TestLoadSVG(t *testing.T) {
 	}
 }
 
+func TestLoadWarningErrorSVG(t *testing.T) {
+	for address, status := range map[string]string{
+		influxAddressLoadDataError:   "error",
+		influxAddressLoadDataWarning: "warning",
+	} {
+		s, err := NewServer(Config{
+			TLSProxy:       true,
+			InfluxAddress:  address,
+			InfluxBPMHost:  "Max Mustermann",
+			InfluxUsername: "foo",
+			InfluxPassword: "bar",
+			GinMode:        gin.TestMode,
+			GZIPExtension:  true,
+			Debug:          true,
+		})
+		assert.NoError(t, err)
+		for _, dimension := range svgLoadDimensions {
+			w := httptest.NewRecorder()
+			req, _ := http.NewRequest("GET", fmt.Sprintf("/load-%dx%d.svg", dimension[0], dimension[1]), nil)
+			s.Router.ServeHTTP(w, req)
+			assert.Equal(t, 200, w.Code)
+			assert.Equal(t, "image/svg+xml", w.Header().Get("Content-Type"))
+			assert.True(t, strings.HasPrefix(w.Body.String(), "<svg xmlns"))
+			assert.True(t, strings.HasSuffix(w.Body.String(), "</svg>"))
+			assert.True(t, strings.Contains(w.Body.String(), `class="series `+status))
+		}
+	}
+}
+
 func TestNoInfluxConnection(t *testing.T) {
 	s, err := NewServer(Config{
 		InfluxAddress: "http://127.0.0.1:1",
@@ -478,35 +636,52 @@ func TestNoInfluxConnection(t *testing.T) {
 		GinMode:       gin.TestMode,
 	})
 	assert.NoError(t, err)
-	for _, dimension := range svgBPMDimensions {
-		path := fmt.Sprintf("/bpm-%dx%d.svg", dimension[0], dimension[1])
-		w := httptest.NewRecorder()
-		req, _ := http.NewRequest("GET", path, nil)
-		s.Router.ServeHTTP(w, req)
+	for svg, dimensions := range map[string][][]int{
+		"bpm":  svgBPMDimensions,
+		"load": svgLoadDimensions,
+	} {
+		for _, dimension := range dimensions {
+			path := fmt.Sprintf("/%s-%dx%d.svg", svg, dimension[0], dimension[1])
+			w := httptest.NewRecorder()
+			req, _ := http.NewRequest("GET", path, nil)
+			s.Router.ServeHTTP(w, req)
 
-		assert.Equal(t, http.StatusBadGateway, w.Code)
-		assert.Contains(t, w.Body.String(), "mail@hashworks.net")
+			assert.Equal(t, http.StatusBadGateway, w.Code)
+			assert.Contains(t, w.Body.String(), "mail@hashworks.net")
+		}
 	}
+
+	w := httptest.NewRecorder()
+	req, _ := http.NewRequest("GET", "/status", nil)
+	s.Router.ServeHTTP(w, req)
+
+	assert.Equal(t, http.StatusBadGateway, w.Code)
+	assert.Contains(t, w.Body.String(), "mail@hashworks.net")
 }
 
 func TestInfluxNotEnoughData(t *testing.T) {
 	s, err := NewServer(Config{
-		InfluxAddress: influxAddressNotEnoughData,
+		InfluxAddress: influxAddressBPMNotEnoughData,
 		InfluxBPMHost: "Max Mustermann",
 		GinMode:       gin.TestMode,
 	})
 	assert.NoError(t, err)
-	for _, dimension := range svgBPMDimensions {
-		path := fmt.Sprintf("/bpm-%dx%d.svg", dimension[0], dimension[1])
-		w := httptest.NewRecorder()
-		req, _ := http.NewRequest("GET", path, nil)
-		s.Router.ServeHTTP(w, req)
+	for svg, dimensions := range map[string][][]int{
+		"bpm":  svgBPMDimensions,
+		"load": svgLoadDimensions,
+	} {
+		for _, dimension := range dimensions {
+			path := fmt.Sprintf("/%s-%dx%d.svg", svg, dimension[0], dimension[1])
+			w := httptest.NewRecorder()
+			req, _ := http.NewRequest("GET", path, nil)
+			s.Router.ServeHTTP(w, req)
 
-		assert.Equal(t, http.StatusOK, w.Code)
-		assert.Equal(t, "image/svg+xml", w.Header().Get("Content-Type"))
-		assert.True(t, strings.HasPrefix(w.Body.String(), "<svg xmlns"))
-		assert.True(t, strings.HasSuffix(w.Body.String(), "</svg>"))
-		assert.Contains(t, w.Body.String(), "heart-rate")
+			assert.Equal(t, http.StatusOK, w.Code)
+			assert.Equal(t, "image/svg+xml", w.Header().Get("Content-Type"))
+			assert.True(t, strings.HasPrefix(w.Body.String(), "<svg xmlns"))
+			assert.True(t, strings.HasSuffix(w.Body.String(), "</svg>"))
+			assert.Contains(t, w.Body.String(), "Not enough")
+		}
 	}
 }
 
@@ -517,18 +692,30 @@ func TestInfluxNoData(t *testing.T) {
 		GinMode:       gin.TestMode,
 	})
 	assert.NoError(t, err)
-	for _, dimension := range svgBPMDimensions {
-		path := fmt.Sprintf("/bpm-%dx%d.svg", dimension[0], dimension[1])
-		w := httptest.NewRecorder()
-		req, _ := http.NewRequest("GET", path, nil)
-		s.Router.ServeHTTP(w, req)
+	for svg, dimensions := range map[string][][]int{
+		"bpm":  svgBPMDimensions,
+		"load": svgLoadDimensions,
+	} {
+		for _, dimension := range dimensions {
+			path := fmt.Sprintf("/%s-%dx%d.svg", svg, dimension[0], dimension[1])
+			w := httptest.NewRecorder()
+			req, _ := http.NewRequest("GET", path, nil)
+			s.Router.ServeHTTP(w, req)
 
-		assert.Equal(t, http.StatusOK, w.Code)
-		assert.Equal(t, "image/svg+xml", w.Header().Get("Content-Type"))
-		assert.True(t, strings.HasPrefix(w.Body.String(), "<svg xmlns"))
-		assert.True(t, strings.HasSuffix(w.Body.String(), "</svg>"))
-		assert.Contains(t, w.Body.String(), "Not enough")
+			assert.Equal(t, http.StatusOK, w.Code)
+			assert.Equal(t, "image/svg+xml", w.Header().Get("Content-Type"))
+			assert.True(t, strings.HasPrefix(w.Body.String(), "<svg xmlns"))
+			assert.True(t, strings.HasSuffix(w.Body.String(), "</svg>"))
+			assert.Contains(t, w.Body.String(), "Not enough")
+		}
 	}
+
+	w := httptest.NewRecorder()
+	req, _ := http.NewRequest("GET", "/status", nil)
+	s.Router.ServeHTTP(w, req)
+
+	assert.Equal(t, http.StatusOK, w.Code)
+	assert.Contains(t, w.Body.String(), `<div class="status error">No data!</div>`)
 }
 
 func TestInfluxFailure(t *testing.T) {
@@ -538,15 +725,27 @@ func TestInfluxFailure(t *testing.T) {
 		GinMode:       gin.TestMode,
 	})
 	assert.NoError(t, err)
-	for _, dimension := range svgBPMDimensions {
-		path := fmt.Sprintf("/bpm-%dx%d.svg", dimension[0], dimension[1])
-		w := httptest.NewRecorder()
-		req, _ := http.NewRequest("GET", path, nil)
-		s.Router.ServeHTTP(w, req)
+	for svg, dimensions := range map[string][][]int{
+		"bpm":  svgBPMDimensions,
+		"load": svgLoadDimensions,
+	} {
+		for _, dimension := range dimensions {
+			path := fmt.Sprintf("/%s-%dx%d.svg", svg, dimension[0], dimension[1])
+			w := httptest.NewRecorder()
+			req, _ := http.NewRequest("GET", path, nil)
+			s.Router.ServeHTTP(w, req)
 
-		assert.Equal(t, http.StatusInternalServerError, w.Code)
-		assert.Contains(t, w.Body.String(), "mail@hashworks.net")
+			assert.Equal(t, http.StatusInternalServerError, w.Code)
+			assert.Contains(t, w.Body.String(), "mail@hashworks.net")
+		}
 	}
+
+	w := httptest.NewRecorder()
+	req, _ := http.NewRequest("GET", "/status", nil)
+	s.Router.ServeHTTP(w, req)
+
+	assert.Equal(t, http.StatusInternalServerError, w.Code)
+	assert.Contains(t, w.Body.String(), "mail@hashworks.net")
 }
 
 func TestInfluxUnauthorized(t *testing.T) {
@@ -556,15 +755,27 @@ func TestInfluxUnauthorized(t *testing.T) {
 		GinMode:       gin.TestMode,
 	})
 	assert.NoError(t, err)
-	for _, dimension := range svgBPMDimensions {
-		path := fmt.Sprintf("/bpm-%dx%d.svg", dimension[0], dimension[1])
-		w := httptest.NewRecorder()
-		req, _ := http.NewRequest("GET", path, nil)
-		s.Router.ServeHTTP(w, req)
+	for svg, dimensions := range map[string][][]int{
+		"bpm":  svgBPMDimensions,
+		"load": svgLoadDimensions,
+	} {
+		for _, dimension := range dimensions {
+			path := fmt.Sprintf("/%s-%dx%d.svg", svg, dimension[0], dimension[1])
+			w := httptest.NewRecorder()
+			req, _ := http.NewRequest("GET", path, nil)
+			s.Router.ServeHTTP(w, req)
 
-		assert.Equal(t, http.StatusBadGateway, w.Code)
-		assert.Contains(t, w.Body.String(), "mail@hashworks.net")
+			assert.Equal(t, http.StatusBadGateway, w.Code)
+			assert.Contains(t, w.Body.String(), "mail@hashworks.net")
+		}
 	}
+
+	w := httptest.NewRecorder()
+	req, _ := http.NewRequest("GET", "/status", nil)
+	s.Router.ServeHTTP(w, req)
+
+	assert.Equal(t, http.StatusBadGateway, w.Code)
+	assert.Contains(t, w.Body.String(), "mail@hashworks.net")
 }
 
 func TestNoDebugCSS(t *testing.T) {
