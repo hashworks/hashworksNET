@@ -80,9 +80,9 @@ func NewServer(config Config) (Server, error) {
 
 	s.loadTemplates()
 
-	s.Router.StaticFS("/static", &prefixHTTPFS{prefix: "static"})
-	s.Router.StaticFS("/img", &prefixHTTPFS{prefix: "img"})
-	s.Router.StaticFS("/css", &prefixHTTPFS{prefix: "css"})
+	s.Router.StaticFS("/static", &bindata.HTTPFS{Prefix: "static"})
+	s.Router.StaticFS("/img", &bindata.HTTPFS{Prefix: "img"})
+	s.Router.StaticFS("/css", &bindata.HTTPFS{Prefix: "css"})
 
 	s.Router.GET("/robots.txt", func(c *gin.Context) {
 		c.String(http.StatusOK, "User-agent: *\nDisallow: /status\nDisallow: /status-*.svg")
