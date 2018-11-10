@@ -1,4 +1,5 @@
 # hashworks.net source
+[![droneio](https://drone.github.hashworks.net/api/badges/hashworks/hashworksNET/status.svg?branch=master)](https://drone.github.hashworks.net/hashworks/hashworksNET) [![codecov](https://codecov.io/gh/hashworks/hashworksNET/branch/dev/graph/badge.svg)](https://codecov.io/gh/hashworks/hashworksNET)
 
 Repository of [hashworks.net](https://hashworks.net).
 

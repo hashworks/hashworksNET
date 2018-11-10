@@ -23,18 +23,15 @@ pipeline:
       - go test --covermode=atomic --coverprofile=coverage.out ./server
       - ./bin/hashworksNET --version
 
-  coverage:
-    image: golang
+  codecov:
+    image: plugins/codecov
     pull: true
-    commands:
-    - if go tool cover --html=coverage.out -o=coverage.html; then
-    -   if [ -f coverage.html ]; then echo "Coverage report:" "$FILEBIN_BASE"/"$(curl -s "$FILEBIN_BASE"/api/v2.1.1/file/upload -F apikey="$FILEBIN_APIKEY" -F "file=@coverage.html" | cut -d \" -f 10)"; fi
-    - else
-    -   return 1
-    - fi
-    secrets: [ filebin_base, filebin_apikey ]
+    files:
+      - coverage.out
+    secrets: [ codecov_token ]
     when:
-      event: push
+      event: [ push, pull_request ]
+      status: [ success ]
 
   deploy:
     image: rics3n/drone-ansible:2
