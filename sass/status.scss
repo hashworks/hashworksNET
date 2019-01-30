@@ -69,7 +69,7 @@
   }
 
   .bpm {
-    $max-height: 300;
+    $max-height: 275;
     background: url('/bpm-1940x#{$max-height}.svg') no-repeat center top;
     background-size: contain;
     height: #{$max-height}px;

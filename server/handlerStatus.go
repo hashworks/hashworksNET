@@ -9,19 +9,20 @@ import (
 	"github.com/influxdata/influxdb/client/v2"
 	"github.com/wcharczuk/go-chart/drawing"
 	"log"
+	"math"
 	"net/http"
 	"strings"
 	"time"
 )
 
 var svgBPMDimensions = [][]int{
-	{1940, 300},
-	{1700, 300},
-	{1380, 300},
-	{1145, 300},
-	{980, 300},
-	{780, 300},
-	{580, 300},
+	{1940, 275},
+	{1700, 275},
+	{1380, 275},
+	{1145, 275},
+	{980, 275},
+	{780, 275},
+	{580, 275},
 	{380, 200},
 	{200, 115},
 }
@@ -199,7 +200,7 @@ func (s *Server) handlerStatus(c *gin.Context) {
 			}
 
 			if kilobytes != 0 {
-				percentage := int(kilobytes / float64(len(series.Values)) / float64(s.config.InfluxUpstreamMax) * 100)
+				percentage := int(math.Min(kilobytes/float64(len(series.Values))/float64(s.config.InfluxUpstreamMax)*100, 100))
 				newService.Message = fmt.Sprintf("%d%% average utilisation over the last 5 minutes", percentage)
 				if percentage > 90 {
 					newService.Status = "error"
