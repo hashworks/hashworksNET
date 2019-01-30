@@ -95,7 +95,8 @@ func (s *Server) handlerStatus(c *gin.Context) {
 
 	resp := s.queryInfluxDB(c, "SELECT last(*) FROM net_response WHERE port = '32400' AND protocol='tcp' AND time > now() - 2m;"+
 		"SELECT last(*) FROM net_response WHERE port = '6697' AND protocol='tcp' AND time > now() - 2m;"+
-		fmt.Sprintf("SELECT last(load1), last(load5), last(load15) FROM system WHERE host = '%s' AND time > now() - 2m", s.config.InfluxLoadHost), "telegraf")
+		fmt.Sprintf("SELECT last(load1), last(load5), last(load15) FROM system WHERE host = '%s' AND time > now() - 2m;", s.config.InfluxLoadHost)+
+		fmt.Sprintf("SELECT non_negative_derivative(last(\"ifHCOutOctets\"), 1s) / 1000 AS \"Out\" FROM \"ifXTable\" WHERE (\"agent_host\" =~ /^%s$/ AND \"ifName\" =~ /^(%s)$/) AND time >= now() - 5m GROUP BY time(200ms), \"ifName\" fill(null);", s.config.InfluxUpstreamHost, s.config.InfluxUpstreamInterface), "telegraf")
 	if resp == nil {
 		return
 	}
@@ -182,6 +183,34 @@ func (s *Server) handlerStatus(c *gin.Context) {
 					}
 				}
 			}
+		} else if series.Name == "ifXTable" {
+			newService := Service{"Upstream Load", "error", "No data!"}
+
+			kilobytes := float64(0)
+			for _, upstream := range series.Values {
+				if kilobyte, ok := upstream[1].(json.Number); ok {
+					kilobyte, err := kilobyte.Float64()
+					if err != nil {
+						s.recoveryHandlerStatus(http.StatusInternalServerError, c, err)
+						return
+					}
+					kilobytes += kilobyte
+				}
+			}
+
+			if kilobytes != 0 {
+				percentage := int(kilobytes / float64(len(series.Values)) / float64(s.config.InfluxUpstreamMax) * 100)
+				newService.Message = fmt.Sprintf("%d%% average utilisation over the last 5 minutes", percentage)
+				if percentage > 90 {
+					newService.Status = "error"
+				} else if percentage > 50 {
+					newService.Status = "warning"
+				} else {
+					newService.Status = "ok"
+				}
+			}
+
+			services = append(services, newService)
 		}
 	}
 

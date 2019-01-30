@@ -29,18 +29,21 @@ type Server struct {
 }
 
 type Config struct {
-	Version        string
-	BuildDate      string
-	GinMode        string
-	TLSProxy       bool
-	GZIPExtension  bool
-	Debug          bool
-	Domain         string
-	InfluxBPMHost  string
-	InfluxLoadHost string
-	InfluxAddress  string
-	InfluxUsername string
-	InfluxPassword string
+	Version                 string
+	BuildDate               string
+	GinMode                 string
+	TLSProxy                bool
+	GZIPExtension           bool
+	Debug                   bool
+	Domain                  string
+	InfluxBPMHost           string
+	InfluxLoadHost          string
+	InfluxUpstreamHost      string
+	InfluxUpstreamInterface string
+	InfluxUpstreamMax       int
+	InfluxAddress           string
+	InfluxUsername          string
+	InfluxPassword          string
 }
 
 func NewServer(config Config) (Server, error) {

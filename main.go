@@ -77,6 +77,27 @@ func main() {
 			Destination: &config.InfluxLoadHost,
 		},
 		cli.StringFlag{
+			EnvVar:      "HWNET_INFLUX_UPSTREAM_HOST",
+			Name:        "influxUpstreamHost",
+			Usage:       "InfluxDB upstream measurements host",
+			Value:       "127.0.0.1",
+			Destination: &config.InfluxUpstreamHost,
+		},
+		cli.StringFlag{
+			EnvVar:      "HWNET_INFLUX_UPSTREAM_INTERFACE",
+			Name:        "influxUpstreamInterface",
+			Usage:       "InfluxDB upstream measurements interface",
+			Value:       "eth0",
+			Destination: &config.InfluxUpstreamInterface,
+		},
+		cli.IntFlag{
+			EnvVar:      "HWNET_INFLUX_UPSTREAM_MAX",
+			Name:        "influxUpstreamMax",
+			Usage:       "InfluxDB upstream maximum in kilobyte",
+			Value:       125000,
+			Destination: &config.InfluxUpstreamMax,
+		},
+		cli.StringFlag{
 			EnvVar:      "HWNET_INFLUX_ADDRESS",
 			Name:        "influxAddress",
 			Usage:       "InfluxDB address",

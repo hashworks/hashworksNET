@@ -226,7 +226,7 @@ func TestAcception(t *testing.T) {
 			if !assert.NoError(t, err) {
 				t.FailNow()
 			}
-			assert.Equal(t, 2, articleSubHeadersCount)
+			assert.Equal(t, 3, articleSubHeadersCount)
 
 			for i := 0; i < articleSubHeadersCount; i++ {
 				articleSubHeader := articleSubHeaders.At(i)
@@ -238,6 +238,8 @@ func TestAcception(t *testing.T) {
 					assert.Equal(t, "Plex:", articleSubHeaderText)
 				} else if i == 1 {
 					assert.Equal(t, "ZNC:", articleSubHeaderText)
+				} else if i == 2 {
+					assert.Equal(t, "Upstream Load:", articleSubHeaderText)
 				}
 			}
 
@@ -246,7 +248,7 @@ func TestAcception(t *testing.T) {
 			if !assert.NoError(t, err) {
 				t.FailNow()
 			}
-			assert.Equal(t, 2, serviceStatusDivsCount)
+			assert.Equal(t, 3, serviceStatusDivsCount)
 		} else {
 			if i == 0 || i == 2 {
 				var class string
