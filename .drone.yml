@@ -47,6 +47,7 @@ pipeline:
     image: golang
     pull: true
     commands:
+      - sleep 2
       - cd acception
       - if ! go test . --hub="selenium-chrome:4444" --url="https://hashworks.net/" --htmlPath acceptionTest.html --screenshotPath acceptionTest.png; then
       -   if [ -f acceptionTest.html ]; then echo "HTML:" "$FILEBIN_BASE"/"$(curl -s "$FILEBIN_BASE"/api/v2.1.1/file/upload -F apikey="$FILEBIN_APIKEY" -F "file=@acceptionTest.html" | cut -d \" -f 10)"; fi
