@@ -15,9 +15,9 @@ import (
 
 var (
 	// Set the following uppercase three with -ldflags "-X main.VERSION=v1.2.3 [...]"
-	VERSION    string = "?.?.?"
-	BUILD_DATE string = "unknown date"
-	GIN_MODE   string = gin.DebugMode
+	VERSION    = "?.?.?"
+	BUILD_DATE = "unknown date"
+	GIN_MODE   = gin.DebugMode
 )
 
 func main() {
@@ -132,7 +132,7 @@ func main() {
 	}
 
 	if err := app.Run(os.Args); err != nil {
-		fmt.Fprintf(os.Stderr, "Error: %s\n", err)
+		_, _ = fmt.Fprintf(os.Stderr, "Error: %s\n", err)
 		os.Exit(1)
 	}
 }

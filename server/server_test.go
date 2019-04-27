@@ -170,7 +170,7 @@ func emulateInflux() {
 	http.HandleFunc("/loadData/query", func(w http.ResponseWriter, _ *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
-		w.Write([]byte(`{
+		_, err := w.Write([]byte(`{
   "results": [
     {
       "statement_id": 0,
@@ -216,13 +216,16 @@ func emulateInflux() {
     }
   ]
 }`))
+		if err != nil {
+			panic(err)
+		}
 	})
 	for name, avg := range map[string]int{"Error": 8, "Warning": 4} {
 		name, avg := name, avg // Copy value for closure
 		http.HandleFunc(fmt.Sprintf("/loadData%s/query", name), func(w http.ResponseWriter, _ *http.Request) {
 			w.Header().Set("Content-Type", "application/json")
 			w.WriteHeader(http.StatusOK)
-			w.Write([]byte(fmt.Sprintf(`{
+			_, err := w.Write([]byte(fmt.Sprintf(`{
   "results": [
     {
       "statement_id": 0,
@@ -252,13 +255,16 @@ func emulateInflux() {
     }
   ]
 }`, avg, avg, avg)))
+			if err != nil {
+				panic(err)
+			}
 		})
 	}
 
 	http.HandleFunc("/statusData/query", func(w http.ResponseWriter, _ *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
-		w.Write([]byte(`
+		_, err := w.Write([]byte(`
 {
   "results": [
     {
@@ -329,20 +335,26 @@ func emulateInflux() {
     }
   ]
 }`))
+		if err != nil {
+			panic(err)
+		}
 	})
 
 	http.HandleFunc("/failure/query", func(w http.ResponseWriter, _ *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
-		w.Write([]byte(`
+		_, err := w.Write([]byte(`
 {
    "results" : []
 }`))
+		if err != nil {
+			panic(err)
+		}
 	})
 	http.HandleFunc("/noData/query", func(w http.ResponseWriter, _ *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
-		w.Write([]byte(`
+		_, err := w.Write([]byte(`
 {
    "results" : [
       {
@@ -350,6 +362,9 @@ func emulateInflux() {
       }
    ]
 }`))
+		if err != nil {
+			panic(err)
+		}
 	})
 	http.HandleFunc("/unauthorized/query", func(w http.ResponseWriter, _ *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
