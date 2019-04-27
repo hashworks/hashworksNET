@@ -203,7 +203,7 @@ func TestAcception(t *testing.T) {
 	if !assert.NoError(t, err) {
 		t.FailNow()
 	}
-	assert.Equal(t, 3, articleCount)
+	assert.Equal(t, 2, articleCount)
 
 	for i := 0; i < articleCount; i++ {
 		article := articles.At(i)
@@ -249,31 +249,22 @@ func TestAcception(t *testing.T) {
 				t.FailNow()
 			}
 			assert.Equal(t, 3, serviceStatusDivsCount)
-		} else {
-			if i == 0 || i == 2 {
-				var class string
-				if i == 0 {
-					class = "load"
-					assert.Equal(t, articleHeader, "Server Load")
-					assert.Equal(t, "HIVE", articleTag)
-				} else if i == 2 {
-					class = "bpm"
-					assert.Equal(t, articleHeader, "Heart-Rate")
-					assert.Equal(t, "WALKER", articleTag)
-				}
+		} else if i == 0 {
+			class := "load"
+			assert.Equal(t, articleHeader, "Server Load")
+			assert.Equal(t, "HIVE", articleTag)
 
-				backgroundImage, err := article.FindByXPath(fmt.Sprintf("div[@class='status-svg']/div[@class='%s']", class)).CSS("background-image")
-				if !assert.NoError(t, err) {
-					t.FailNow()
-				}
-				if !assert.True(t, strings.HasPrefix(backgroundImage, `url("`)) {
-					t.FailNow()
-				}
-
-				statusBackgroundImages = append(statusBackgroundImages, strings.Split(backgroundImage, `"`)[1])
-			} else {
+			backgroundImage, err := article.FindByXPath(fmt.Sprintf("div[@class='status-svg']/div[@class='%s']", class)).CSS("background-image")
+			if !assert.NoError(t, err) {
 				t.FailNow()
 			}
+			if !assert.True(t, strings.HasPrefix(backgroundImage, `url("`)) {
+				t.FailNow()
+			}
+
+			statusBackgroundImages = append(statusBackgroundImages, strings.Split(backgroundImage, `"`)[1])
+		} else {
+			t.FailNow()
 		}
 	}
 

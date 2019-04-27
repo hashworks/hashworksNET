@@ -68,38 +68,6 @@
     background: none;
   }
 
-  .bpm {
-    $max-height: 275;
-    background: url('/bpm-1940x#{$max-height}.svg') no-repeat center top;
-    background-size: contain;
-    height: #{$max-height}px;
-
-    $sizes: (2000 1700 #{$max-height})
-            (1700 1380 #{$max-height})
-            (1400 1145 #{$max-height})
-            (1200  980 #{$max-height})
-            (1000  780 #{$max-height})
-            (800   580 #{$max-height})
-            (600   380 200)
-            (400   200 115);
-
-    @each $i in $sizes {
-      @media screen and (max-width: #{nth($i, 1)}px) {
-        background-image: url('/bpm-#{nth($i, 2)}x#{nth($i, 3)}.svg');
-        height: #{nth($i, 3)}px;
-      }
-    }
-
-    @media screen and (max-width: $minimum-width) {
-      background: none;
-      height: auto;
-
-      &::after {
-        content: 'Please use a wider screen.';
-      }
-    }
-  }
-
   .load {
     background: url('/load-800x200.svg') no-repeat center top;
     background-size: contain;
