@@ -92,8 +92,8 @@ selenium:
     - tags
   artifacts:
     paths:
-      - acceptionTest.html
-      - acceptionTest.png
+      - acception/acceptionTest.html
+      - acception/acceptionTest.png
     when: on_failure
 
 restore:
