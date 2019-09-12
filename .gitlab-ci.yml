@@ -24,7 +24,7 @@ build:
   stage: build
   image: golang:latest
   variables:
-    - CGO_ENABLED=0
+    CGO_ENABLED: 0
   script:
     - go generate --run "fileb0x"
     - go build -ldflags "-X main.VERSION=$(git describe --tags) -X main.BUILD_DATE=$(date --iso-8601=seconds) -X main.GIN_MODE=release" -o bin/hashworksNET *.go
@@ -59,7 +59,7 @@ selenium:
   stage: acceptance
   image: golang
   variables:
-    - HUB_HOST=standalone-chrome
+    HUB_HOST: "standalone-chrome"
   services:
     - selenium/standalone-chrome:latest
   script:
