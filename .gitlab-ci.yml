@@ -71,9 +71,10 @@ selenium:
   stage: acceptance
   image: golang
   variables:
-    HUB_HOST: "standalone-chrome"
+    HUB_HOST: "selenium"
   services:
-    - selenium/standalone-chrome:latest
+    - name: selenium/standalone-chrome:latest
+      alias: selenium
   script:
     - cd acception
     - go test . --hub="${HUB_HOST}:4444" --url="https://hashworks.net/" --htmlPath acceptionTest.html --screenshotPath acceptionTest.png
