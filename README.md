@@ -1,5 +1,5 @@
 # hashworks.net source
-[![coverage report](https://git.hashworks.net/hashworks/hashworksNET/badges/master/coverage.svg)](https://git.hashworks.net/hashworks/hashworksNET/commits/master) [![codecov](https://codecov.io/gh/hashworks/hashworksNET/branch/dev/graph/badge.svg)](https://codecov.io/gh/hashworks/hashworksNET)
+[![pipeline status](https://git.hashworks.net/hashworks/hashworksNET/badges/master/pipeline.svg)](https://git.hashworks.net/hashworks/hashworksNET/commits/master) [![codecov](https://codecov.io/gh/hashworks/hashworksNET/branch/dev/graph/badge.svg)](https://codecov.io/gh/hashworks/hashworksNET)
 
 Repository of [hashworks.net](https://hashworks.net).
 
