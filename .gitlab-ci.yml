@@ -54,7 +54,7 @@ deploy:
     name: mullnerz/ansible-playbook:latest
     entrypoint: [""]
   script:
-    - echo "${ANSIBLE_SSH_KEY}" | base64 --decode > ansible.key
+    - echo "${ANSIBLE_SSH_KEY}" | base64 -d > ansible.key
     - ansible-playbook --private-key=ansible.key -i deployment/inventories/staging deployment/deploy.yml
   only:
     - master
