@@ -115,8 +115,8 @@ func TestAcception(t *testing.T) {
 
 	// Header should contain some links
 	header := page.FindByXPath("//header")
-	for _, link := range []string{"/", "/status", "https://github.com/hashworks", "https://steamcommunity.com/id/hashworks", "https://www.reddit.com/user/hashworks/posts/"} {
-		linkElement := header.FindByXPath(fmt.Sprintf("//a[@href='%s']", link))
+	for _, link := range []string{"/", "/status", "https://git.hashworks.net", "https://github.com/hashworks", "https://steamcommunity.com/id/hashworks", "https://www.reddit.com/user/hashworks/posts/"} {
+		linkElement := header.FindByXPath(fmt.Sprintf("//nav//a[@href='%s']", link))
 		if count, err := linkElement.Count(); assert.NoError(t, err) {
 			assert.Equal(t, count, 1)
 		}
