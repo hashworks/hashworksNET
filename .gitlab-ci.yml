@@ -94,6 +94,7 @@ selenium:
     paths:
       - acceptionTest.html
       - acceptionTest.png
+    when: on_failure
 
 restore:
   dependencies:
