@@ -27,11 +27,11 @@ buildAndTest:
   image: golang:latest
   variables:
     CGO_ENABLED: 0
-    GOPATH: "$PWD/.go"
   script:
     - test -f sass/main.css
     - test -f sass/chart.css
     - test -f sass/status.css
+    - export GOPATH="$PWD/.go"
     - go generate --run "fileb0x"
     - go build -ldflags "-X main.VERSION=$(git describe --tags) -X main.BUILD_DATE=$(date --iso-8601=seconds) -X main.GIN_MODE=release" -o bin/hashworksNET *.go
     - go test --covermode=atomic --coverprofile=coverage.out ./server
