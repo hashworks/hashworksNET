@@ -5,7 +5,6 @@
 stages:
   - generate
   - build
-  - coverage
   - deploy
   - acceptance
   - restore
@@ -23,11 +22,12 @@ sass:
     paths:
       - sass/*.css
 
-build:
+buildAndTest:
   stage: build
   image: golang:latest
   variables:
     CGO_ENABLED: 0
+    GOPATH: "$PWD/.go"
   script:
     - test -f sass/main.css
     - test -f sass/chart.css
@@ -35,19 +35,18 @@ build:
     - go generate --run "fileb0x"
     - go build -ldflags "-X main.VERSION=$(git describe --tags) -X main.BUILD_DATE=$(date --iso-8601=seconds) -X main.GIN_MODE=release" -o bin/hashworksNET *.go
     - go test --covermode=atomic --coverprofile=coverage.out ./server
+    - test -f coverage.out
+    - curl -sL https://codecov.io/bash > codecov
+    - bash codecov -f coverage.out -t "$CODEGOV_TOKEN"
     - ./bin/hashworksNET --version
   artifacts:
     paths:
       - coverage.out
       - bin/hashworksNET
-
-coverage:
-  stage: coverage
-  image: cosmintitei/bash-curl:latest
-  script:
-    - test -f coverage.out
-    - curl -L https://codecov.io/bash > codecov
-    - bash codecov -f coverage.out -t "$CODEGOV_TOKEN"
+  cache:
+    key: go
+    paths:
+      - .go
 
 deploy:
   stage: deploy
