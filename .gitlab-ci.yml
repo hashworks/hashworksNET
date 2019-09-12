@@ -1,0 +1,90 @@
+#variables:
+# CODEGOV_TOKEN    (project)
+# ANSIBLE_SSH_KEY  (project) base64 encoded
+
+stages:
+  - generate
+  - build
+  - coverage
+  - deploy
+  - acceptance
+  - restore
+
+sass:
+  stage: generate
+  image:
+    name: codycraven/sassc:latest
+    entrypoint: [""]
+  script:
+    - sassc -p 0 -t compressed sass/main.scss sass/main.css
+    - sassc -p 0 -t compressed sass/chart.scss sass/chart.css
+    - sassc -p 0 -t compressed sass/status.scss sass/status.css
+
+build:
+  stage: build
+  image: golang:latest
+  variables:
+    - CGO_ENABLED=0
+  script:
+    - go generate --run "fileb0x"
+    - go build -ldflags "-X main.VERSION=$(git describe --tags) -X main.BUILD_DATE=$(date --iso-8601=seconds) -X main.GIN_MODE=release" -o bin/hashworksNET *.go
+    - go test --covermode=atomic --coverprofile=coverage.out ./server
+    - ./bin/hashworksNET --version
+  artifacts:
+    paths:
+      - coverage.out
+      - bin/hashworksNET
+
+coverage:
+  stage: coverage
+  image: cosmintitei/bash-curl:latest
+  script:
+    - test -f coverage.out
+    - curl -L https://codecov.io/bash > codecov
+    - bash codecov -f coverage.out -t "$CODEGOV_TOKEN"
+
+deploy:
+  stage: deploy
+  image:
+    name: mullnerz/ansible-playbook:latest
+    entrypoint: [""]
+  script:
+    - echo "${ANSIBLE_SSH_KEY}" | base64 --decode > ansible.key
+    - ansible-playbook --private-key=ansible.key -i deployment/inventories/staging deployment/deploy.yml
+  only:
+    - master
+    - tags
+
+selenium:
+  stage: acceptance
+  image: golang
+  variables:
+    - HUB_HOST=standalone-chrome
+  services:
+    - selenium/standalone-chrome:latest
+  script:
+    - cd acception
+    - go test . --hub="${HUB_HOST}:4444" --url="https://hashworks.net/" --htmlPath acceptionTest.html --screenshotPath acceptionTest.png
+  when: delayed
+  start_in: 10 seconds
+  only:
+    - master
+    - tags
+  artifacts:
+    paths:
+      - acceptionTest.html
+      - acceptionTest.png
+
+restore:
+  stage: restore
+  image:
+    name: mullnerz/ansible-playbook:latest
+    entrypoint: [""]
+  script:
+    - test -f acceptionTest.html || exit 0
+    - echo "${ANSIBLE_SSH_KEY}" | base64 --decode > ansible.key
+    - ansible-playbook --private-key=ansible.key -i deployment/inventories/staging deployment/restore.yml
+  when: on_failure
+  only:
+    - master
+    - tag
