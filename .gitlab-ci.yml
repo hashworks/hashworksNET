@@ -80,7 +80,7 @@ selenium:
   variables:
     HUB_HOST: "selenium"
   services:
-    - name: selenium/standalone-chrome:latest
+    - name: selenium/standalone-chrome:3.141.59-oxygen
       alias: selenium
   script:
     - cd acception
