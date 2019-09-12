@@ -49,7 +49,6 @@ buildAndTest:
       - .go
 
 .ansible: # Template
-  stage: deploy
   image:
     name: mullnerz/ansible-playbook:latest
     entrypoint: [""]
@@ -62,6 +61,7 @@ buildAndTest:
     - tags
 
 deploy:
+  stage: deploy
   extends: .ansible
   script:
     - ansible-playbook --private-key=ansible.key -i deployment/inventories/staging deployment/deploy.yml
@@ -87,6 +87,7 @@ selenium:
       - acceptionTest.png
 
 restore:
+  stage: restore
   extends: .ansible
   script:
     - test -f acceptionTest.html || exit 0
