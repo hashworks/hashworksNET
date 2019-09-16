@@ -3,40 +3,33 @@
   tasks:
   - name: Create backup of systemd unit file with fixed name
     copy:
-      src: /etc/systemd/system/hashworksNET.service
-      dest: /etc/systemd/system/hashworksNET.service.bak
+      src: ~/.config/systemd/user/hashworksNET.service
+      dest: ~/.config/systemd/user/hashworksNET.service.bak
       remote_src: yes
-      owner: root
-      group: root
       mode: 0600
 
   - name: Copy systemd unit file
     copy:
       src: ../systemd/hashworksNET.service
-      dest: /etc/systemd/system/hashworksNET.service
-      owner: root
-      group: root
+      dest: ~/.config/systemd/user/hashworksNET.service
       mode: 0600
 
   - name: Create backup of binary file with fixed name
     copy:
-      src: /usr/local/bin/hashworksNET
-      dest: /usr/local/bin/hashworksNET.bak
+      src: ~/bin/hashworksNET
+      dest: ~/bin/hashworksNET.bak
       remote_src: yes
-      owner: root
-      group: root
-      mode: 0775
+      mode: 0770
 
   - name: Copy binary
     copy:
       src: ../bin/hashworksNET
-      dest: /usr/local/bin/hashworksNET
-      owner: root
-      group: root
-      mode: 0775
+      dest: ~/bin/hashworksNET
+      mode: 0770
 
   - name: Restart systemd service
     systemd:
       name: hashworksNET
+      scope: user
       daemon_reload: true
       state: restarted

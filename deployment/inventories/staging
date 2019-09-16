@@ -2,4 +2,4 @@
 hive.hashworks.net
 
 [hive:vars]
-ansible_ssh_user=root
+ansible_ssh_user=ansible_hashworksnet
