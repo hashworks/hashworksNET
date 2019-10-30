@@ -2,10 +2,11 @@ package server
 
 import (
 	"fmt"
-	"github.com/gin-gonic/gin"
-	"github.com/unrolled/secure"
 	"net/http"
 	"strings"
+
+	"github.com/gin-gonic/gin"
+	"github.com/unrolled/secure"
 )
 
 func (s Server) getSecureMiddleware() *secure.Secure {
