@@ -5,16 +5,18 @@ import (
 	"encoding/base64"
 	"errors"
 	"fmt"
-	"github.com/ekyoung/gin-nice-recovery"
-	"github.com/hashworks/hashworksNET/server/bindata"
 	"regexp"
 	"time"
+
+	nice "github.com/ekyoung/gin-nice-recovery"
+	"github.com/hashworks/hashworksNET/server/bindata"
+
+	"html/template"
+	"net/http"
 
 	"github.com/gin-contrib/cache/persistence"
 	"github.com/gin-contrib/gzip"
 	"github.com/gin-gonic/gin"
-	"html/template"
-	"net/http"
 )
 
 // I'm using this struct to pass stuff around. Like database connections etc

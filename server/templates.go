@@ -2,12 +2,13 @@ package server
 
 import (
 	"fmt"
-	"github.com/gin-contrib/multitemplate"
-	"github.com/hashworks/hashworksNET/server/bindata"
 	"html/template"
 	"runtime"
 	"strings"
 	"time"
+
+	"github.com/gin-contrib/multitemplate"
+	"github.com/hashworks/hashworksNET/server/bindata"
 )
 
 func (s Server) templateFunctionMap() template.FuncMap {

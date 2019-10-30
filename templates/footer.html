@@ -1,8 +1,6 @@
 {{define "footer"}}
 </div>
 <footer>
-	<div class="right">{{ if .PageStartTime }}{{LoadTimes .PageStartTime}} | {{ end }}v{{ version }} | {{ GoVer }}</div>
+	<div class=right>{{ if .PageStartTime }}{{LoadTimes .PageStartTime}} | {{ end }}v{{ version }} | {{ GoVer }}</div>
 </footer>
-</body>
-</html>
 {{end}}

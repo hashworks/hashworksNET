@@ -3,16 +3,17 @@ package server
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/gin-gonic/gin"
-	"github.com/go-errors/errors"
-	"github.com/hashworks/go-chart"
-	"github.com/influxdata/influxdb/client/v2"
-	"github.com/wcharczuk/go-chart/drawing"
 	"log"
 	"math"
 	"net/http"
 	"strings"
 	"time"
+
+	"github.com/gin-gonic/gin"
+	"github.com/go-errors/errors"
+	"github.com/hashworks/go-chart"
+	"github.com/influxdata/influxdb/client/v2"
+	"github.com/wcharczuk/go-chart/drawing"
 )
 
 var svgLoadDimensions = [][]int{

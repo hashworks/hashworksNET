@@ -73,6 +73,7 @@ svg {
 
 .fill {
   $transparentize-value: .6;
+
   &.ok {
     fill: transparentize($status-color-ok, $transparentize-value);
   }

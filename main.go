@@ -7,10 +7,11 @@ package main
 
 import (
 	"fmt"
+	"os"
+
 	"github.com/gin-gonic/gin"
 	"github.com/hashworks/hashworksNET/server"
 	"github.com/urfave/cli"
-	"os"
 )
 
 var (

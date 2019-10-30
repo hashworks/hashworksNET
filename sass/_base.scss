@@ -1,6 +1,7 @@
 @import 'configuration';
 
-html { // Required for the footer, see https://stackoverflow.com/a/23442814
+html {
+  // Required for the footer, see https://stackoverflow.com/a/23442814
   min-height: 100%;
   position: relative;
 }
