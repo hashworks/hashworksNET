@@ -1,13 +1,14 @@
 package server
 
 import (
-	"github.com/gin-contrib/cache"
-	"github.com/gin-contrib/cache/persistence"
-	"github.com/gin-gonic/gin"
 	"log"
 	"net/http"
 	"strings"
 	"time"
+
+	"github.com/gin-contrib/cache"
+	"github.com/gin-contrib/cache/persistence"
+	"github.com/gin-gonic/gin"
 )
 
 func (s Server) recoveryHandlerStatus(statusCode int, c *gin.Context, err interface{}) {
