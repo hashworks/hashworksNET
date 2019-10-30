@@ -2,14 +2,15 @@ package server
 
 import (
 	"fmt"
-	"github.com/gin-gonic/gin"
-	"github.com/stretchr/testify/assert"
 	"net"
 	"net/http"
 	"net/http/httptest"
 	"os"
 	"strings"
 	"testing"
+
+	"github.com/gin-gonic/gin"
+	"github.com/stretchr/testify/assert"
 )
 
 var influxAddressLoadData,
@@ -290,9 +291,9 @@ func (s *Server) headerTest(t *testing.T) {
 		s.Router.ServeHTTP(w, req)
 
 		assert.Equal(t, 200, w.Code)
-		assert.True(t, strings.Contains(w.Body.String(), fmt.Sprintf(`<style rel="stylesheet" type="text/css">%s</style>`, s.css)))
+		assert.True(t, strings.Contains(w.Body.String(), fmt.Sprintf(`<style rel=stylesheet type="text/css">%s</style>`, s.css)))
 		if path == "/status" {
-			assert.True(t, strings.Contains(w.Body.String(), `<link rel="stylesheet" type="text/css" href="/css/status.css">`))
+			assert.True(t, strings.Contains(w.Body.String(), `<link rel=stylesheet type="text/css" href="/css/status.css">`))
 		}
 	}
 }
@@ -552,7 +553,7 @@ func TestNoDebugCSS(t *testing.T) {
 
 	assert.Equal(t, http.StatusOK, w.Code)
 	assert.Contains(t, w.Body.String(), "mail@hashworks.net")
-	assert.True(t, strings.Contains(w.Body.String(), fmt.Sprintf("<style rel=\"stylesheet\" type=\"text/css\">%s</style>", s.css)))
+	assert.True(t, strings.Contains(w.Body.String(), fmt.Sprintf("<style rel=stylesheet type=\"text/css\">%s</style>", s.css)))
 }
 
 func TestConfigError(t *testing.T) {
