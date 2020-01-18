@@ -15,9 +15,9 @@ sass:
     name: codycraven/sassc:latest
     entrypoint: [""]
   script:
-    - sassc -p 0 -t compressed sass/main.scss sass/main.css
-    - sassc -p 0 -t compressed sass/chart.scss sass/chart.css
-    - sassc -p 0 -t compressed sass/status.scss sass/status.css
+    - sassc -p 2 -t compressed sass/main.scss sass/main.css
+    - sassc -p 2 -t compressed sass/chart.scss sass/chart.css
+    - sassc -p 2 -t compressed sass/status.scss sass/status.css
   artifacts:
     paths:
       - sass/*.css

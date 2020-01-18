@@ -1,7 +1,7 @@
 // Any changes to the sassc rules need to be added to the CI configuration as well
-//go:generate sassc -p 0 -t compressed sass/main.scss sass/main.css
-//go:generate sassc -p 0 -t compressed sass/status.scss sass/status.css
-//go:generate sassc -p 0 -t compressed sass/chart.scss sass/chart.css
+//go:generate sassc -p 2 -t compressed sass/main.scss sass/main.css
+//go:generate sassc -p 2 -t compressed sass/status.scss sass/status.css
+//go:generate sassc -p 2 -t compressed sass/chart.scss sass/chart.css
 //go:generate go run github.com/UnnoTed/fileb0x b0x.yaml
 package main
 
