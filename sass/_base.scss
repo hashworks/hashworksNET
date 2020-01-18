@@ -70,7 +70,7 @@ header {
       opacity: 1;
     }
 
-    @media (max-width: $small-screen-max-width) {
+    @media (max-width: 720px) {
       min-width: 100%;
       .entry {
         max-width: 100%;
