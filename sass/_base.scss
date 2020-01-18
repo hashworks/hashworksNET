@@ -57,7 +57,7 @@ header {
       cursor: pointer;
       flex-grow: 1;
       height: $header-height;
-      max-width: 300px;
+      max-width: 200px;
       text-align: center;
     }
 
@@ -72,6 +72,9 @@ header {
 
     @media (max-width: $small-screen-max-width) {
       min-width: 100%;
+      .entry {
+        max-width: 100%;
+      }
     }
   }
 
@@ -88,7 +91,7 @@ header {
       opacity: 1;
     }
 
-    @media screen and (max-width: 200px) {
+    @media screen and (max-width: 305px) {
       display: none;
     }
   }
