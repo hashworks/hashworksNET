@@ -84,7 +84,6 @@ func NewServer(config Config) (Server, error) {
 
 	s.loadTemplates()
 
-	s.Router.StaticFS("/static", &bindata.HTTPFS{Prefix: "static"})
 	s.Router.StaticFS("/img", &bindata.HTTPFS{Prefix: "img"})
 	s.Router.StaticFS("/css", &bindata.HTTPFS{Prefix: "css"})
 

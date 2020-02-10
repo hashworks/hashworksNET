@@ -156,22 +156,11 @@ func TestAcception(t *testing.T) {
 	assert.Equal(t, articleHeader, "Contact")
 
 	// Should contain some links
-	for _, link := range []string{"mailto:mail@hashworks.net", "/static/pgp_public_key.asc", "https://freenode.net/"} {
+	for _, link := range []string{"mailto:mail@hashworks.net", "/.well-known/openpgpkey/hu/dizb37aqa5h4skgu7jf1xjr4q71w4paq", "https://freenode.net/"} {
 		linkElement := article.FindByXPath(fmt.Sprintf("//a[@href='%s']", link))
 		if count, err := linkElement.Count(); assert.NoError(t, err) {
 			assert.Equal(t, count, 1)
 		}
-	}
-
-	// Check public key
-	resp, err := http.Get(url + "static/pgp_public_key.asc")
-	if assert.NoError(t, err) {
-		defer resp.Body.Close()
-		body, err := ioutil.ReadAll(resp.Body)
-		if !assert.NoError(t, err) {
-			t.FailNow()
-		}
-		assert.Equal(t, string(body[:36]), "-----BEGIN PGP PUBLIC KEY BLOCK-----")
 	}
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

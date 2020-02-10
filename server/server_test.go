@@ -278,8 +278,6 @@ func TestBasicParallel(t *testing.T) {
 		t.Run("redirect", s.redirectTest)
 		t.Run("images", s.imagesTest)
 		t.Run("css", s.cssTest)
-		t.Run("statics", s.staticsTest)
-		t.Run("notFound", s.notFoundTest)
 		t.Run("robots", s.robotsTest)
 	})
 }
@@ -358,29 +356,6 @@ func (s *Server) cssTest(t *testing.T) {
 
 	assert.Equal(t, 200, w.Code)
 	assert.Equal(t, "text/css", w.Header().Get("Content-Type"))
-}
-
-func (s *Server) staticsTest(t *testing.T) {
-	for _, staticFile := range []string{"pgp_public_key.asc", "pgp_public_key"} {
-		w := httptest.NewRecorder()
-		req, _ := http.NewRequest("GET", "/static/"+staticFile, nil)
-		s.Router.ServeHTTP(w, req)
-
-		assert.Equal(t, 200, w.Code)
-		assert.Equal(t, "File Transfer", w.Header().Get("Content-Description"))
-		assert.Equal(t, "attachment", w.Header().Get("Content-Disposition"))
-		assert.Equal(t, "application/octet-stream", w.Header().Get("Content-Type"))
-		assert.Equal(t, "binary", w.Header().Get("Content-Transfer-Encoding"))
-		assert.NotEmpty(t, w.Body)
-	}
-}
-
-func (s *Server) notFoundTest(t *testing.T) {
-	w := httptest.NewRecorder()
-	req, _ := http.NewRequest("GET", "/static/notExistingFile", nil)
-	s.Router.ServeHTTP(w, req)
-
-	assert.Equal(t, 404, w.Code)
 }
 
 func (s *Server) robotsTest(t *testing.T) {
