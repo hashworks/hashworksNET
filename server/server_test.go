@@ -361,16 +361,18 @@ func (s *Server) cssTest(t *testing.T) {
 }
 
 func (s *Server) staticsTest(t *testing.T) {
-	w := httptest.NewRecorder()
-	req, _ := http.NewRequest("GET", "/static/pgp_public_key.asc", nil)
-	s.Router.ServeHTTP(w, req)
+	for _, staticFile := range []string{"pgp_public_key.asc", "pgp_public_key"} {
+		w := httptest.NewRecorder()
+		req, _ := http.NewRequest("GET", "/static/"+staticFile, nil)
+		s.Router.ServeHTTP(w, req)
 
-	assert.Equal(t, 200, w.Code)
-	assert.Equal(t, "File Transfer", w.Header().Get("Content-Description"))
-	assert.Equal(t, "attachment", w.Header().Get("Content-Disposition"))
-	assert.Equal(t, "application/octet-stream", w.Header().Get("Content-Type"))
-	assert.Equal(t, "binary", w.Header().Get("Content-Transfer-Encoding"))
-	assert.NotEmpty(t, w.Body)
+		assert.Equal(t, 200, w.Code)
+		assert.Equal(t, "File Transfer", w.Header().Get("Content-Description"))
+		assert.Equal(t, "attachment", w.Header().Get("Content-Disposition"))
+		assert.Equal(t, "application/octet-stream", w.Header().Get("Content-Type"))
+		assert.Equal(t, "binary", w.Header().Get("Content-Transfer-Encoding"))
+		assert.NotEmpty(t, w.Body)
+	}
 }
 
 func (s *Server) notFoundTest(t *testing.T) {
