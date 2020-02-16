@@ -263,7 +263,7 @@ func TestAcception(t *testing.T) {
 
 	// Check status graphs
 	for _, link := range statusBackgroundImages {
-		resp, err = http.Get(link)
+		resp, err := http.Get(link)
 		if assert.NoError(t, err) {
 			defer resp.Body.Close()
 			body, err := ioutil.ReadAll(resp.Body)
