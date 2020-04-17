@@ -1,5 +1,5 @@
 ---
-- hosts: hera
+- hosts: production
   tasks:
   - name: Copy systemd unit backup file
     copy:

@@ -1,5 +1,0 @@
-[hera]
-fd53::10:156:186:1
-
-[hera:vars]
-ansible_ssh_user=ansible_hashworksnet

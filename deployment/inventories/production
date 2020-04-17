@@ -1,0 +1,5 @@
+[production]
+2a01:4f8:c0c:71e9:5f1f:ecd1:ca26:35ef
+
+[production:vars]
+ansible_ssh_user=ansible_hashworksnet
