@@ -1,7 +1,7 @@
 variables:
 # CODEGOV_TOKEN    (project)
 # ANSIBLE_SSH_KEY  (project) base64 encoded
-  PRODUCTION_HOST: fd53::10:156:186:1
+  PRODUCTION_HOST: 10.156.186.1
   PRODUCTION_USER: ansible_hashworksnet
 
 stages:
