@@ -11,12 +11,12 @@
     register: binary
 
   - name: Create backup of systemd unit file with fixed name
+    when: service.stat.exists
     copy:
       src: ~/.config/systemd/user/hashworksNET.service
       dest: ~/.config/systemd/user/hashworksNET.service.bak
       remote_src: yes
       mode: 0600
-      when: service.stat.exists
 
   - name: Copy systemd unit file
     copy:
@@ -25,12 +25,12 @@
       mode: 0600
 
   - name: Create backup of binary file with fixed name
+    when: binary.stat.exists
     copy:
       src: ~/bin/hashworksNET
       dest: ~/bin/hashworksNET.bak
       remote_src: yes
       mode: 0770
-      when: binary.stat.exists
 
   - name: Copy binary
     copy:
