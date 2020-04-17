@@ -1,6 +1,8 @@
-#variables:
+variables:
 # CODEGOV_TOKEN    (project)
 # ANSIBLE_SSH_KEY  (project) base64 encoded
+  PRODUCTION_HOST: fd53::10:156:186:1
+  PRODUCTION_USER: ansible_hashworksnet
 
 stages:
   - generate
@@ -67,7 +69,7 @@ deploy:
   stage: deploy
   extends: .ansible
   script:
-    - ansible-playbook --private-key=ansible.key --extra-vars "remote_server=fd53::10:156:186:1 remote_user=ansible_hashworksnet" deployment/deploy.yml
+    - ansible-playbook --private-key=ansible.key -i "${PRODUCTION_HOST},"--extra-vars "remote_server=${PRODUCTION_HOST} remote_user=${PRODUCTION_USER}" deployment/deploy.yml
     - echo "true" > .deployed
   artifacts:
     paths:
@@ -103,5 +105,5 @@ restore:
   extends: .ansible
   script:
     - test -f .deployed || exit 0
-    - ansible-playbook --private-key=ansible.key --extra-vars "remote_server=fd53::10:156:186:1 remote_user=ansible_hashworksnet" deployment/restore.yml
+    - ansible-playbook --private-key=ansible.key -i "${PRODUCTION_HOST}," --extra-vars "remote_server=${PRODUCTION_HOST} remote_user=${PRODUCTION_USER}" deployment/restore.yml
   when: on_failure
