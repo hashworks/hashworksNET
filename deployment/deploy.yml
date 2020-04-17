@@ -1,5 +1,5 @@
 ---
-- hosts: hive.hashworks.net
+- hosts: hera
   tasks:
   - name: Create backup of systemd unit file with fixed name
     copy:
