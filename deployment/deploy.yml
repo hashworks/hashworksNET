@@ -5,10 +5,10 @@
   tasks:
   - name: Check if service exists
     local_action: stat path=~/.config/systemd/user/hashworksNET.service
-      register: service
+    register: service
   - name: Check if binary exists
     local_action: stat path=~/bin/hashworksNET
-      register: binary
+    register: binary
 
   - name: Create backup of systemd unit file with fixed name
     copy:
