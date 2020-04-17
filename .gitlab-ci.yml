@@ -69,7 +69,7 @@ deploy:
   stage: deploy
   extends: .ansible
   script:
-    - ansible-playbook --private-key=ansible.key -i "${PRODUCTION_HOST},"--extra-vars "remote_server=${PRODUCTION_HOST} remote_user=${PRODUCTION_USER}" deployment/deploy.yml
+    - ansible-playbook --private-key=ansible.key -i "${PRODUCTION_HOST}," --extra-vars "remote_server=${PRODUCTION_HOST} remote_user=${PRODUCTION_USER}" deployment/deploy.yml
     - echo "true" > .deployed
   artifacts:
     paths:
