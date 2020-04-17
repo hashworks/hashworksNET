@@ -18,6 +18,11 @@
       remote_src: yes
       mode: 0600
 
+  - name: Create systemd dir if it does not exist
+    file:
+      path: ~/.config/systemd/user
+      state: directory
+
   - name: Copy systemd unit file
     copy:
       src: ../systemd/hashworksNET.service
@@ -31,6 +36,11 @@
       dest: ~/bin/hashworksNET.bak
       remote_src: yes
       mode: 0770
+
+  - name: Create bin dir if it does not exist
+    file:
+      path: ~/bin
+      state: directory
 
   - name: Copy binary
     copy:
