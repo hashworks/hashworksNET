@@ -1,5 +1,5 @@
-[hive]
-hive.hashworks.net
+[hera]
+fd53::10:156:186:1
 
-[hive:vars]
+[hera:vars]
 ansible_ssh_user=ansible_hashworksnet
