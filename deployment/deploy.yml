@@ -3,12 +3,20 @@
   remote_user: "{{remote_user}}"
 
   tasks:
+  - name: Check if service exists
+    local_action: stat path=~/.config/systemd/user/hashworksNET.service
+      register: service
+  - name: Check if binary exists
+    local_action: stat path=~/bin/hashworksNET
+      register: binary
+
   - name: Create backup of systemd unit file with fixed name
     copy:
       src: ~/.config/systemd/user/hashworksNET.service
       dest: ~/.config/systemd/user/hashworksNET.service.bak
       remote_src: yes
       mode: 0600
+      when: service.stat.exists
 
   - name: Copy systemd unit file
     copy:
@@ -22,6 +30,7 @@
       dest: ~/bin/hashworksNET.bak
       remote_src: yes
       mode: 0770
+      when: binary.stat.exists
 
   - name: Copy binary
     copy:
