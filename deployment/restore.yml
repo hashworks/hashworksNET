@@ -1,5 +1,7 @@
 ---
-- hosts: production
+- hosts: "{{remote_server}}"
+  remote_user: "{{remote_user}}"
+
   tasks:
   - name: Copy systemd unit backup file
     copy:

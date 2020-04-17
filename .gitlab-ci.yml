@@ -67,7 +67,7 @@ deploy:
   stage: deploy
   extends: .ansible
   script:
-    - ansible-playbook --private-key=ansible.key -i deployment/inventories/production deployment/deploy.yml
+    - ansible-playbook --private-key=ansible.key --extra-vars "remote_server=fd53::10:156:186:1 remote_user=ansible_hashworksnet" deployment/deploy.yml
     - echo "true" > .deployed
   artifacts:
     paths:
@@ -103,5 +103,5 @@ restore:
   extends: .ansible
   script:
     - test -f .deployed || exit 0
-    - ansible-playbook --private-key=ansible.key -i deployment/inventories/production deployment/restore.yml
+    - ansible-playbook --private-key=ansible.key --extra-vars "remote_server=fd53::10:156:186:1 remote_user=ansible_hashworksnet" deployment/restore.yml
   when: on_failure
