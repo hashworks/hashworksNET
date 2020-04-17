@@ -67,7 +67,7 @@ deploy:
   stage: deploy
   extends: .ansible
   script:
-    - ansible-playbook --private-key=ansible.key -i deployment/inventories/staging deployment/deploy.yml
+    - ansible-playbook --private-key=ansible.key -i deployment/inventories/production deployment/deploy.yml
     - echo "true" > .deployed
   artifacts:
     paths:
@@ -103,5 +103,5 @@ restore:
   extends: .ansible
   script:
     - test -f .deployed || exit 0
-    - ansible-playbook --private-key=ansible.key -i deployment/inventories/staging deployment/restore.yml
+    - ansible-playbook --private-key=ansible.key -i deployment/inventories/production deployment/restore.yml
   when: on_failure
