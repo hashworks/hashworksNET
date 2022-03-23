@@ -1,9 +1,10 @@
 {{define "status"}}
 {{template "header" . }}
 <div class=page>
+	{{range .Nodes }}
 	<section class=cards>
 		<article class=card>
-			<div class=tag>{{ LoadHost }}</div>
+			<div class=tag>{{ .Name }}</div>
 			<h1>Server Load</h1>
 			<table class=load>
 				<tr>
@@ -15,11 +16,11 @@
 				</tr>
 			</table>
 			<div class=status-svg>
-				<div class=load></div>
+				<div class="load {{ .Name }}"></div>
 			</div>
 		</article>
 		<article class=card>
-			<div class=tag>{{ LoadHost }}</div>
+			<div class=tag>{{ .Name }}</div>
 			<h1>Public Services</h1>
 			{{range .Services }}
 			<h4>{{.Name}}:</h4>
@@ -29,6 +30,7 @@
 			{{end}}
 		</article>
 	</section>
+	{{end}}
 </div>
 {{template "footer" . }}
 {{end}}

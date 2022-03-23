@@ -1,23 +1,31 @@
 package server
 
 import (
-	"encoding/json"
+	"context"
 	"fmt"
 	"log"
 	"math"
 	"net/http"
+	"strconv"
 	"strings"
 	"time"
+
+	"github.com/prometheus/client_golang/api"
+	v1 "github.com/prometheus/client_golang/api/prometheus/v1"
+	"github.com/prometheus/common/model"
+	drawingUpstream "github.com/wcharczuk/go-chart/drawing"
 
 	"github.com/gin-gonic/gin"
 	"github.com/go-errors/errors"
 	"github.com/hashworks/go-chart"
-	"github.com/influxdata/influxdb/client/v2"
-	"github.com/wcharczuk/go-chart/drawing"
 )
 
 var svgLoadDimensions = [][]int{
-	{800, 200},
+	{1120, 200},
+	{1020, 200},
+	{920, 200},
+	{820, 200},
+	{720, 200},
 	{620, 200},
 	{520, 200},
 	{440, 200},
@@ -25,6 +33,12 @@ var svgLoadDimensions = [][]int{
 	{600, 200},
 	{380, 200},
 	{200, 115},
+}
+
+type Node struct {
+	Name     string
+	Services []Service
+	Loads    []Load
 }
 
 type Service struct {
@@ -38,170 +52,182 @@ type Load struct {
 	Value  float64
 }
 
-func (s *Server) queryInfluxDB(c *gin.Context, command, db string) *client.Response {
-	influxConfig := client.HTTPConfig{
-		Addr:      s.config.InfluxAddress,
-		UserAgent: "hashworksNET/" + s.config.Version,
-	}
-	if s.config.InfluxUsername != "" && s.config.InfluxPassword != "" {
-		influxConfig.Username = s.config.InfluxUsername
-		influxConfig.Password = s.config.InfluxPassword
-	}
-	httpClient, err := client.NewHTTPClient(influxConfig)
-	defer httpClient.Close()
-
+func (s *Server) queryPrometheus(query string, ts time.Time) (model.Vector, error) {
+	client, err := api.NewClient(api.Config{
+		Address: "http://192.168.144.2:9090",
+	})
 	if err != nil {
-		s.recoveryHandlerStatus(http.StatusInternalServerError, c, err)
-		return nil
+		return nil, err
 	}
 
-	q := client.Query{
-		Command:   command,
-		Database:  db,
-		Precision: "s",
+	v1api := v1.NewAPI(client)
+
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	result, warnings, err := v1api.Query(ctx, query, ts)
+	if len(warnings) > 0 {
+		log.Printf("Prometheus warnings: %v\n", warnings)
 	}
 
-	resp, err := httpClient.Query(q)
+	return result.(model.Vector), err
+}
 
+func (s *Server) queryPrometheusRange(query string, r v1.Range) (model.Matrix, error) {
+	client, err := api.NewClient(api.Config{
+		Address: "http://192.168.144.2:9090",
+	})
 	if err != nil {
-		s.recoveryHandlerStatus(http.StatusBadGateway, c, err)
-		return nil
+		return nil, err
 	}
 
-	if len(resp.Results) == 0 {
-		s.recoveryHandlerStatus(http.StatusInternalServerError, c, errors.New("InfluxDB query failed."))
-		return nil
+	v1api := v1.NewAPI(client)
+
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	result, warnings, err := v1api.QueryRange(ctx, query, r)
+	if len(warnings) > 0 {
+		log.Printf("Prometheus warnings: %v\n", warnings)
 	}
 
-	if s.config.Debug {
-		log.Println(resp)
+	return result.(model.Matrix), err
+}
+
+func (s *Server) queryNode(shortHostname string, fqdn string, plexDomain string, dotDomain string, snmp bool) (Node, error) {
+	load1, err := s.queryPrometheus("node_load1{fqdn=\""+fqdn+"\"}", time.Now())
+	if err != nil || load1.Len() != 1 {
+		return Node{}, errors.New("Prometheus query 'node_load1' for " + shortHostname + " failed.")
 	}
 
-	return resp
+	load5, err := s.queryPrometheus("node_load5{fqdn=\""+fqdn+"\"}", time.Now())
+	if err != nil || load5.Len() != 1 {
+		return Node{}, errors.New("Prometheus query 'node_load5' for " + shortHostname + " failed.")
+	}
+
+	load15, err := s.queryPrometheus("node_load15{fqdn=\""+fqdn+"\"}", time.Now())
+	if err != nil || load15.Len() != 1 {
+		return Node{}, errors.New("Prometheus query 'node_load15' for " + shortHostname + " failed.")
+	}
+
+	var loads []Load
+
+	for _, load := range []model.Vector{load1, load5, load15} {
+		value, err := strconv.ParseFloat(load[0].Value.String(), 8)
+		if err != nil {
+			return Node{}, errors.New("Failed to parse load.")
+		}
+		var status string
+
+		if value >= 8 {
+			status = "error"
+		} else if value >= 4 {
+			status = "warning"
+		} else {
+			status = "ok"
+		}
+
+		loads = append(loads, Load{
+			Value:  value,
+			Status: status,
+		})
+	}
+
+	var services []Service
+
+	probeSuccessPlex, err := s.queryPrometheus("probe_success{instance=\""+plexDomain+":32400\"}", time.Now())
+	if err != nil || probeSuccessPlex.Len() != 1 {
+		return Node{}, errors.New("Prometheus query 'probe_success' for plex on " + shortHostname + " failed.")
+	}
+
+	probeDurationPlex, err := s.queryPrometheus("probe_duration_seconds{instance=\""+plexDomain+":32400\"}", time.Now())
+	if err != nil || probeDurationPlex.Len() != 1 {
+		return Node{}, errors.New("Prometheus query 'probe_duration_seconds' for plex on " + shortHostname + " failed.")
+	}
+
+	probeNames := []string{"Plex"}
+	probeSuccess := []model.Vector{probeSuccessPlex}
+	probeDurations := []model.Vector{probeDurationPlex}
+
+	if dotDomain != "" {
+		probeSuccessDoT, err := s.queryPrometheus("probe_success{instance=\""+dotDomain+":853\"}", time.Now())
+		if err != nil || probeSuccessDoT.Len() != 1 {
+			return Node{}, errors.New("Prometheus query 'probe_success' for dot on " + shortHostname + " failed.")
+		}
+
+		probeDurationDoT, err := s.queryPrometheus("probe_duration_seconds{instance=\""+dotDomain+":853\"}", time.Now())
+		if err != nil || probeDurationDoT.Len() != 1 {
+			return Node{}, errors.New("Prometheus query 'probe_duration_seconds' for dot on " + shortHostname + " failed.")
+		}
+
+		probeNames = append(probeNames, "DNS")
+		probeSuccess = append(probeSuccess, probeSuccessDoT)
+		probeDurations = append(probeDurations, probeDurationDoT)
+	}
+
+	for i, probeDuration := range probeDurations {
+		newService := Service{probeNames[i], "error", "No data!"}
+
+		if probeSuccess[i][0].Value.String() != "1" {
+			newService.Status = "error"
+			newService.Message = "Offline."
+		} else {
+			probeDuration, err := strconv.ParseFloat(probeDuration[0].Value.String(), 8)
+			if err != nil {
+				return Node{}, errors.New("Failed to parse probe duration.")
+			}
+			if probeDuration >= 0.2 {
+				newService.Status = "warning"
+			} else {
+				newService.Status = "ok"
+			}
+			newService.Message = fmt.Sprintf("Online. %.02fs latency.", probeDuration)
+		}
+
+		services = append(services, newService)
+	}
+
+	if snmp {
+		outRate, err := s.queryPrometheus("irate(ifHCOutOctets{job=\"snmp\",ifName=\"eth0\"}[5m])", time.Now())
+		if err != nil || outRate.Len() != 1 {
+			return Node{}, errors.New("Prometheus query 'ifHCOutOctets' for " + shortHostname + " failed.")
+		}
+		outRateValue, err := strconv.ParseFloat(outRate[0].Value.String(), 8)
+		if err != nil {
+			return Node{}, errors.New("Failed to parse outRate.")
+		}
+
+		newService := Service{"Upstream Load", "error", "No data!"}
+		if outRateValue != 0 {
+			percentage := int(math.Min(outRateValue/float64(50000*1000)*100, 100))
+			newService.Message = fmt.Sprintf("%d%% average utilisation over the last 5 minutes", percentage)
+			if percentage > 90 {
+				newService.Status = "error"
+			} else if percentage > 50 {
+				newService.Status = "warning"
+			} else {
+				newService.Status = "ok"
+			}
+		}
+		services = append(services, newService)
+	}
+
+	return Node{shortHostname, services, loads}, nil
 }
 
 func (s *Server) handlerStatus(c *gin.Context) {
 	pageStartTime := time.Now()
 
-	resp := s.queryInfluxDB(c, "SELECT last(*) FROM net_response WHERE port = '32400' AND protocol='tcp' AND time > now() - 2m;"+
-		"SELECT last(*) FROM net_response WHERE port = '6697' AND protocol='tcp' AND time > now() - 2m;"+
-		fmt.Sprintf("SELECT last(load1), last(load5), last(load15) FROM system WHERE host = '%s' AND time > now() - 2m;", s.config.InfluxLoadHost)+
-		fmt.Sprintf("SELECT non_negative_derivative(last(\"ifHCOutOctets\"), 1s) / 1000 AS \"Out\" FROM \"ifXTable\" WHERE (\"agent_host\" =~ /^%s$/ AND \"ifName\" =~ /^(%s)$/) AND time >= now() - 5m GROUP BY time(200ms), \"ifName\" fill(null);", s.config.InfluxUpstreamHost, s.config.InfluxUpstreamInterface), "telegraf")
-	if resp == nil {
+	nodeHive, err := s.queryNode("hive", "hive.hashworks.net", "plex.hive.hashworks.net", "", true)
+	if err != nil {
+		s.recoveryHandlerStatus(http.StatusInternalServerError, c, err)
 		return
 	}
 
-	var loads []Load
-	var services []Service
-
-	for id, result := range resp.Results {
-		if len(result.Series) != 1 {
-			continue
-		}
-
-		series := result.Series[0]
-
-		if series.Name == "net_response" {
-			var name string
-			if id == 0 {
-				name = "Plex"
-			} else {
-				name = "ZNC"
-			}
-			values := series.Values
-			newService := Service{name, "error", "No data!"}
-			if len(values) == 1 && len(values[0]) == 4 {
-				result, ok := values[0][3].(string)
-				if !ok {
-					s.recoveryHandlerStatus(http.StatusInternalServerError, c, errors.New("Failed to cast JSON result into string"))
-					return
-				}
-
-				responseTime, err := values[0][1].(json.Number).Float64()
-				if err != nil {
-					s.recoveryHandlerStatus(http.StatusInternalServerError, c, err)
-					return
-				}
-
-				resultCode, err := values[0][2].(json.Number).Int64()
-				if err != nil {
-					s.recoveryHandlerStatus(http.StatusInternalServerError, c, err)
-					return
-				}
-
-				if resultCode != 0 {
-					newService.Status = "error"
-				} else if responseTime >= 0.2 {
-					newService.Status = "warning"
-				} else {
-					newService.Status = "ok"
-				}
-
-				if result == "success" {
-					newService.Message = fmt.Sprintf("Online. %.02fs latency.", responseTime)
-				} else {
-					newService.Message = fmt.Sprintf("%s.", strings.Title(result))
-				}
-
-			}
-			services = append(services, newService)
-		} else if series.Name == "system" {
-			if len(series.Values) == 1 && len(series.Values[0]) == 4 {
-				for i := 1; i < 4; i++ {
-					load := series.Values[0][i]
-
-					if data, ok := load.(json.Number); ok {
-						value, err := data.Float64()
-						if err != nil {
-							s.recoveryHandlerStatus(http.StatusInternalServerError, c, err)
-							return
-						}
-
-						var status string
-						if value >= 8 {
-							status = "error"
-						} else if value >= 4 {
-							status = "warning"
-						} else {
-							status = "ok"
-						}
-
-						loads = append(loads, Load{
-							Value:  value,
-							Status: status,
-						})
-					}
-				}
-			}
-		} else if series.Name == "ifXTable" {
-			newService := Service{"Upstream Load", "error", "No data!"}
-
-			kilobytes := float64(0)
-			for _, upstream := range series.Values {
-				if kilobyte, ok := upstream[1].(json.Number); ok {
-					kilobyte, err := kilobyte.Float64()
-					if err != nil {
-						s.recoveryHandlerStatus(http.StatusInternalServerError, c, err)
-						return
-					}
-					kilobytes += kilobyte
-				}
-			}
-
-			if kilobytes != 0 {
-				percentage := int(math.Min(kilobytes/float64(len(series.Values))/float64(s.config.InfluxUpstreamMax)*100, 100))
-				newService.Message = fmt.Sprintf("%d%% average utilisation over the last 5 minutes", percentage)
-				if percentage > 90 {
-					newService.Status = "error"
-				} else if percentage > 50 {
-					newService.Status = "warning"
-				} else {
-					newService.Status = "ok"
-				}
-			}
-
-			services = append(services, newService)
-		}
+	nodeHelios, err := s.queryNode("helios", "helios.kromlinger.eu", "plex.helios.hashworks.net", "dns.kromlinger.eu", false)
+	if err != nil {
+		s.recoveryHandlerStatus(http.StatusInternalServerError, c, err)
+		return
 	}
 
 	c.Header("Cache-Control", "max-age=60")
@@ -212,8 +238,7 @@ func (s *Server) handlerStatus(c *gin.Context) {
 		"Description":   "Status information.",
 		"StatusTab":     true,
 		"PageStartTime": pageStartTime,
-		"Services":      services,
-		"Loads":         loads,
+		"Nodes":         []Node{nodeHive, nodeHelios},
 	})
 }
 
@@ -231,14 +256,19 @@ func (s *Server) drawChart(c *gin.Context, graph chart.Chart) {
 	c.Status(200)
 }
 
-func (s *Server) handlerLoadSVG(width, height int) func(*gin.Context) {
+func (s *Server) handlerLoadSVG(hostname string, width, height int) func(*gin.Context) {
 	return func(c *gin.Context) {
-		resp := s.queryInfluxDB(c, fmt.Sprintf("SELECT load1 FROM system WHERE host = '%s' AND time > now() - 1h", s.config.InfluxLoadHost), "telegraf")
-		if resp == nil {
+		values, err := s.queryPrometheusRange("node_load1{fqdn=\""+hostname+"\"}", v1.Range{
+			Start: time.Now().Add(-time.Hour),
+			End:   time.Now(),
+			Step:  time.Minute,
+		})
+		if err != nil || values.Len() != 1 {
+			s.recoveryHandlerStatus(http.StatusInternalServerError, c, errors.New("Prometheus query 'ifHCOutOctets' failed."))
 			return
 		}
 
-		if len(resp.Results[0].Series) == 0 || len(resp.Results[0].Series[0].Values) <= 2 || len(resp.Results[0].Series[0].Values[0]) < 2 {
+		if len(values[0].Values) < 2 {
 			messageSVG(c, "Not enough data collected in the last hour to draw a graph.", width)
 			return
 		}
@@ -248,7 +278,7 @@ func (s *Server) handlerLoadSVG(width, height int) func(*gin.Context) {
 			Style: chart.Style{
 				Show:      true,
 				ClassName: "series",
-				FillColor: drawing.ColorBlack, // Dummy-Fill so go-chart produces the fill-paths
+				FillColor: drawingUpstream.ColorBlack, // Dummy-Fill so go-chart produces the fill-paths
 			},
 			XValues: []time.Time{},
 			YValues: []float64{},
@@ -258,20 +288,14 @@ func (s *Server) handlerLoadSVG(width, height int) func(*gin.Context) {
 		avg := 0
 		count := 0 // Since len(…) could be wrong
 
-		for _, values := range resp.Results[0].Series[0].Values {
-			timeInt, err := values[0].(json.Number).Int64()
+		for _, samplePair := range values[0].Values {
+			load, err := strconv.ParseFloat(samplePair.Value.String(), 8)
 			if err != nil {
-				s.recoveryHandlerStatus(http.StatusInternalServerError, c, err)
-				return
-			}
-			timestamp := time.Unix(timeInt, 0)
-			load, err := values[1].(json.Number).Float64()
-			if err != nil {
-				s.recoveryHandlerStatus(http.StatusInternalServerError, c, err)
+				s.recoveryHandlerStatus(http.StatusInternalServerError, c, errors.New("Failed to parse load."))
 				return
 			}
 
-			short.XValues = append(short.XValues, timestamp)
+			short.XValues = append(short.XValues, samplePair.Timestamp.Time())
 			short.YValues = append(short.YValues, load)
 
 			if load > max {
@@ -281,6 +305,7 @@ func (s *Server) handlerLoadSVG(width, height int) func(*gin.Context) {
 			avg += int(load)
 			count++
 		}
+
 		avg /= count
 
 		var statusClass string

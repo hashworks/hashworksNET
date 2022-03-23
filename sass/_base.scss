@@ -123,7 +123,10 @@ footer {
   display: flex;
   flex-flow: row wrap;
   margin-left: -$content-spacing;
-  margin-top: -$content-spacing;
+
+  &:first-of-type {
+    margin-top: -$content-spacing;
+  }
 
   .card {
     background-color: $bg-color-darker;

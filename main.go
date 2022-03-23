@@ -1,11 +1,12 @@
 // Any changes to the sassc rules need to be added to the CI configuration as well
-//go:generate sassc -p 2 -t compressed sass/main.scss sass/main.css
-//go:generate sassc -p 2 -t compressed sass/status.scss sass/status.css
-//go:generate sassc -p 2 -t compressed sass/chart.scss sass/chart.css
-//go:generate go run github.com/UnnoTed/fileb0x b0x.yaml
+//go:generate mkdir -p css
+//go:generate sassc -p 2 -t compressed sass/main.scss css/main.css
+//go:generate sassc -p 2 -t compressed sass/status.scss css/status.css
+//go:generate sassc -p 2 -t compressed sass/chart.scss css/chart.css
 package main
 
 import (
+	"embed"
 	"fmt"
 	"os"
 
@@ -21,6 +22,9 @@ var (
 	GIN_MODE   = gin.DebugMode
 )
 
+//go:embed img templates css
+var staticContent embed.FS
+
 func main() {
 	app := cli.NewApp()
 	app.Name = "hashworksNET"
@@ -29,7 +33,7 @@ func main() {
 	app.Version = fmt.Sprintf("%s (%s)", VERSION, BUILD_DATE)
 	app.Copyright = "GNU General Public License v3.0"
 
-	config := server.Config{GinMode: GIN_MODE, Version: VERSION, BuildDate: BUILD_DATE}
+	config := server.Config{GinMode: GIN_MODE, Version: VERSION, BuildDate: BUILD_DATE, StaticContent: staticContent}
 
 	app.Flags = []cli.Flag{
 		cli.BoolFlag{
@@ -57,60 +61,18 @@ func main() {
 			Usage:       "set if service is behind a TLS proxy",
 			Destination: &config.TLSProxy,
 		},
+		cli.StringFlag{
+			EnvVar:      "HWNET_TRUSTEDPROXY",
+			Name:        "trustedProxy",
+			Usage:       "set the trusted proxy",
+			Value:       "127.0.0.1",
+			Destination: &config.TrustedProxy,
+		},
 		cli.BoolFlag{
 			EnvVar:      "HWNET_GZIP",
 			Name:        "gzip",
 			Usage:       "enables gzip compression",
 			Destination: &config.GZIPExtension,
-		},
-		cli.StringFlag{
-			EnvVar:      "HWNET_INFLUX_LOAD_HOST",
-			Name:        "influxLoadHost",
-			Usage:       "InfluxDB load measurements host",
-			Value:       "hive",
-			Destination: &config.InfluxLoadHost,
-		},
-		cli.StringFlag{
-			EnvVar:      "HWNET_INFLUX_UPSTREAM_HOST",
-			Name:        "influxUpstreamHost",
-			Usage:       "InfluxDB upstream measurements host",
-			Value:       "127.0.0.1",
-			Destination: &config.InfluxUpstreamHost,
-		},
-		cli.StringFlag{
-			EnvVar:      "HWNET_INFLUX_UPSTREAM_INTERFACE",
-			Name:        "influxUpstreamInterface",
-			Usage:       "InfluxDB upstream measurements interface",
-			Value:       "eth0",
-			Destination: &config.InfluxUpstreamInterface,
-		},
-		cli.IntFlag{
-			EnvVar:      "HWNET_INFLUX_UPSTREAM_MAX",
-			Name:        "influxUpstreamMax",
-			Usage:       "InfluxDB upstream maximum in kilobyte",
-			Value:       125000,
-			Destination: &config.InfluxUpstreamMax,
-		},
-		cli.StringFlag{
-			EnvVar:      "HWNET_INFLUX_ADDRESS",
-			Name:        "influxAddress",
-			Usage:       "InfluxDB address",
-			Value:       "http://127.0.0.1:8086",
-			Destination: &config.InfluxAddress,
-		},
-		cli.StringFlag{
-			EnvVar:      "HWNET_INFLUX_USERNAME",
-			Name:        "influxUsername",
-			Usage:       "InfluxDB username",
-			Value:       "",
-			Destination: &config.InfluxUsername,
-		},
-		cli.StringFlag{
-			EnvVar:      "HWNET_INFLUX_PASSWORD",
-			Name:        "influxPassword",
-			Usage:       "InfluxDB password",
-			Value:       "",
-			Destination: &config.InfluxPassword,
 		},
 	}
 

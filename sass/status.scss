@@ -70,25 +70,41 @@
   }
 
   .load {
-    background: url('/load-800x200.svg') no-repeat center top;
-    background-size: contain;
-    height: 200px;
-
-    $sizes: (1550 620 200) (1350 520 200) (1200 440 200) (1000 750 200) (750 600 200) (600 380 200) (400 200 115);
-
-    @each $i in $sizes {
-      @media screen and (max-width: #{nth($i, 1)}px) {
-        background-image: url('/load-#{nth($i, 2)}x#{nth($i, 3)}.svg');
-        height: #{nth($i, 3)}px;
-      }
-    }
-
     @media screen and (max-width: $minimum-width) {
       background: none;
       height: auto;
 
       &::after {
         content: 'Please use a wider screen.';
+      }
+    }
+
+    background-size: contain;
+    height: 200px;
+    background-repeat: no-repeat;
+    background-position: center top;
+
+    $sizes: (2550 1120 200) (2350 1020 200) (2150 920 200) (1950 820 200) (1750 720 200) (1550 620 200) (1350 520 200) (1200 440 200) (1000 750 200) (750 600 200) (600 380 200) (400 200 115);
+
+    &.hive {
+      background-image: url('/load-hive-1120x200.svg');
+
+      @each $i in $sizes {
+        @media screen and (max-width: #{nth($i, 1)}px) {
+          background-image: url('/load-hive-#{nth($i, 2)}x#{nth($i, 3)}.svg');
+          height: #{nth($i, 3)}px;
+        }
+      }
+    }
+
+    &.helios {
+      background-image: url('/load-helios-1120x200.svg');
+
+      @each $i in $sizes {
+        @media screen and (max-width: #{nth($i, 1)}px) {
+          background-image: url('/load-helios-#{nth($i, 2)}x#{nth($i, 3)}.svg');
+          height: #{nth($i, 3)}px;
+        }
       }
     }
   }

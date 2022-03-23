@@ -7,9 +7,9 @@ variables:
 stages:
   - generate
   - build
-  - deploy
-  - acceptance
-  - restore
+  #- deploy
+  #- acceptance
+  #- restore
 
 sass:
   stage: generate
@@ -17,12 +17,13 @@ sass:
     name: codycraven/sassc:latest
     entrypoint: [""]
   script:
-    - sassc -p 2 -t compressed sass/main.scss sass/main.css
-    - sassc -p 2 -t compressed sass/chart.scss sass/chart.css
-    - sassc -p 2 -t compressed sass/status.scss sass/status.css
+    - mkdir -p css
+    - sassc -p 2 -t compressed sass/main.scss css/main.css
+    - sassc -p 2 -t compressed sass/chart.scss css/chart.css
+    - sassc -p 2 -t compressed sass/status.scss css/status.css
   artifacts:
     paths:
-      - sass/*.css
+      - css
 
 buildAndTest:
   stage: build
@@ -63,7 +64,7 @@ buildAndTest:
     - master
     - tags
 
-deploy:
+.deploy: # Disabled
   dependencies:
     - buildAndTest
   stage: deploy
@@ -75,7 +76,7 @@ deploy:
     paths:
       - .deployed
 
-selenium:
+.selenium: # Disabled
   dependencies: []
   stage: acceptance
   image: golang
@@ -98,7 +99,7 @@ selenium:
       - acception/acceptionTest.png
     when: on_failure
 
-restore:
+.restore: # Disabled
   dependencies:
     - deploy
   stage: restore

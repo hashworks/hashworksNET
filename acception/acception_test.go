@@ -27,7 +27,7 @@ func TestMain(m *testing.M) {
 	flag.StringVar(&url, "url", "https://hashworks.net/", "The url to check")
 	flag.StringVar(&screenshotPath, "screenshotPath", "", "Path to the screenshot file generated on failure, tmp file will be used otherwise")
 	flag.StringVar(&htmlPath, "htmlPath", "", "Path to the html file generated on failure, tmp file will be used otherwise")
-	flag.Parse()
+	flag.Parse
 
 	if !strings.HasSuffix(url, "/") {
 		url += "/"
@@ -156,7 +156,7 @@ func TestAcception(t *testing.T) {
 	assert.Equal(t, articleHeader, "Contact")
 
 	// Should contain some links
-	for _, link := range []string{"mailto:mail@hashworks.net", "/.well-known/openpgpkey/hu/dizb37aqa5h4skgu7jf1xjr4q71w4paq", "https://freenode.net/"} {
+	for _, link := range []string{"mailto:mail@hashworks.net", "/.well-known/openpgpkey/hu/dizb37aqa5h4skgu7jf1xjr4q71w4paq", "https://libera.chat/"} {
 		linkElement := article.FindByXPath(fmt.Sprintf("//a[@href='%s']", link))
 		if count, err := linkElement.Count(); assert.NoError(t, err) {
 			assert.Equal(t, count, 1)

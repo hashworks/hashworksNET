@@ -8,7 +8,6 @@ import (
 	"time"
 
 	"github.com/gin-contrib/multitemplate"
-	"github.com/hashworks/hashworksNET/server/bindata"
 )
 
 func (s Server) templateFunctionMap() template.FuncMap {
@@ -20,10 +19,7 @@ func (s Server) templateFunctionMap() template.FuncMap {
 			return s.config.Version
 		},
 		"GoVer": func() string {
-			return strings.Title(runtime.Version())
-		},
-		"LoadHost": func() string {
-			return s.config.InfluxLoadHost
+			return strings.ToTitle(runtime.Version())
 		},
 		"LoadTimes": func(startTime time.Time) string {
 			timeSinceST := time.Since(startTime).Nanoseconds() / 1e3
@@ -38,7 +34,7 @@ func (s Server) templateFunctionMap() template.FuncMap {
 
 func (s Server) loadTemplates() {
 	// Load template file names from Asset
-	templateNames, err := bindata.WalkDirs("templates", false)
+	templateDirEntries, err := s.config.StaticContent.ReadDir("templates")
 	if err != nil {
 		panic(err)
 	}
@@ -49,13 +45,13 @@ func (s Server) loadTemplates() {
 
 	// Iterate trough template files, load them into multitemplate
 	multiT := multitemplate.New()
-	for _, templateName := range templateNames {
-		index := strings.Index(templateName, "/")
-		basename := templateName[index+1:]
+	for _, templateDirEntry := range templateDirEntries {
+		index := strings.Index(templateDirEntry.Name(), "/")
+		basename := templateDirEntry.Name()[index+1:]
 		index = strings.Index(basename, ".")
 		basename = basename[:index]
 		tmpl := tmpl.New(basename)
-		data, err := bindata.ReadFile(templateName)
+		data, err := s.config.StaticContent.ReadFile("templates/" + templateDirEntry.Name())
 		if err != nil {
 			panic(err)
 		}
