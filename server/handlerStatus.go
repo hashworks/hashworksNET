@@ -54,7 +54,7 @@ type Load struct {
 
 func (s *Server) queryPrometheus(query string, ts time.Time) (model.Vector, error) {
 	client, err := api.NewClient(api.Config{
-		Address: "http://192.168.144.2:9090",
+		Address: "http://127.0.0.1:9090",
 	})
 	if err != nil {
 		return nil, err
@@ -70,12 +70,16 @@ func (s *Server) queryPrometheus(query string, ts time.Time) (model.Vector, erro
 		log.Printf("Prometheus warnings: %v\n", warnings)
 	}
 
+	if result == nil {
+		return nil, errors.New("nil result")
+	}
+
 	return result.(model.Vector), err
 }
 
 func (s *Server) queryPrometheusRange(query string, r v1.Range) (model.Matrix, error) {
 	client, err := api.NewClient(api.Config{
-		Address: "http://192.168.144.2:9090",
+		Address: "http://127.0.0.1:9090",
 	})
 	if err != nil {
 		return nil, err
@@ -91,21 +95,25 @@ func (s *Server) queryPrometheusRange(query string, r v1.Range) (model.Matrix, e
 		log.Printf("Prometheus warnings: %v\n", warnings)
 	}
 
+	if result == nil {
+		return nil, errors.New("nil result")
+	}
+
 	return result.(model.Matrix), err
 }
 
 func (s *Server) queryNode(shortHostname string, fqdn string, plexDomain string, dotDomain string, snmp bool) (Node, error) {
-	load1, err := s.queryPrometheus("node_load1{fqdn=\""+fqdn+"\"}", time.Now())
+	load1, err := s.queryPrometheus("node_load1{fqdn=\""+fqdn+"\",monitor=\"master\"}", time.Now())
 	if err != nil || load1.Len() != 1 {
 		return Node{}, errors.New("Prometheus query 'node_load1' for " + shortHostname + " failed.")
 	}
 
-	load5, err := s.queryPrometheus("node_load5{fqdn=\""+fqdn+"\"}", time.Now())
+	load5, err := s.queryPrometheus("node_load5{fqdn=\""+fqdn+"\",monitor=\"master\"}", time.Now())
 	if err != nil || load5.Len() != 1 {
 		return Node{}, errors.New("Prometheus query 'node_load5' for " + shortHostname + " failed.")
 	}
 
-	load15, err := s.queryPrometheus("node_load15{fqdn=\""+fqdn+"\"}", time.Now())
+	load15, err := s.queryPrometheus("node_load15{fqdn=\""+fqdn+"\",monitor=\"master\"}", time.Now())
 	if err != nil || load15.Len() != 1 {
 		return Node{}, errors.New("Prometheus query 'node_load15' for " + shortHostname + " failed.")
 	}
@@ -135,12 +143,12 @@ func (s *Server) queryNode(shortHostname string, fqdn string, plexDomain string,
 
 	var services []Service
 
-	probeSuccessPlex, err := s.queryPrometheus("probe_success{instance=\""+plexDomain+":32400\"}", time.Now())
+	probeSuccessPlex, err := s.queryPrometheus("probe_success{instance=\""+plexDomain+":32400\",monitor=\"master\"}", time.Now())
 	if err != nil || probeSuccessPlex.Len() != 1 {
 		return Node{}, errors.New("Prometheus query 'probe_success' for plex on " + shortHostname + " failed.")
 	}
 
-	probeDurationPlex, err := s.queryPrometheus("probe_duration_seconds{instance=\""+plexDomain+":32400\"}", time.Now())
+	probeDurationPlex, err := s.queryPrometheus("probe_duration_seconds{instance=\""+plexDomain+":32400\",monitor=\"master\"}", time.Now())
 	if err != nil || probeDurationPlex.Len() != 1 {
 		return Node{}, errors.New("Prometheus query 'probe_duration_seconds' for plex on " + shortHostname + " failed.")
 	}
@@ -150,12 +158,12 @@ func (s *Server) queryNode(shortHostname string, fqdn string, plexDomain string,
 	probeDurations := []model.Vector{probeDurationPlex}
 
 	if dotDomain != "" {
-		probeSuccessDoT, err := s.queryPrometheus("probe_success{instance=\""+dotDomain+":853\"}", time.Now())
+		probeSuccessDoT, err := s.queryPrometheus("probe_success{instance=\""+dotDomain+":853\",monitor=\"master\"}", time.Now())
 		if err != nil || probeSuccessDoT.Len() != 1 {
 			return Node{}, errors.New("Prometheus query 'probe_success' for dot on " + shortHostname + " failed.")
 		}
 
-		probeDurationDoT, err := s.queryPrometheus("probe_duration_seconds{instance=\""+dotDomain+":853\"}", time.Now())
+		probeDurationDoT, err := s.queryPrometheus("probe_duration_seconds{instance=\""+dotDomain+":853\",monitor=\"master\"}", time.Now())
 		if err != nil || probeDurationDoT.Len() != 1 {
 			return Node{}, errors.New("Prometheus query 'probe_duration_seconds' for dot on " + shortHostname + " failed.")
 		}
@@ -188,7 +196,7 @@ func (s *Server) queryNode(shortHostname string, fqdn string, plexDomain string,
 	}
 
 	if snmp {
-		outRate, err := s.queryPrometheus("irate(ifHCOutOctets{job=\"snmp\",ifName=\"eth0\"}[5m])", time.Now())
+		outRate, err := s.queryPrometheus("irate(ifHCOutOctets{job=\"snmp\",ifName=\"eth0\",monitor=\"master\"}[5m])", time.Now())
 		if err != nil || outRate.Len() != 1 {
 			return Node{}, errors.New("Prometheus query 'ifHCOutOctets' for " + shortHostname + " failed.")
 		}
@@ -258,13 +266,14 @@ func (s *Server) drawChart(c *gin.Context, graph chart.Chart) {
 
 func (s *Server) handlerLoadSVG(hostname string, width, height int) func(*gin.Context) {
 	return func(c *gin.Context) {
-		values, err := s.queryPrometheusRange("node_load1{fqdn=\""+hostname+"\"}", v1.Range{
+		values, err := s.queryPrometheusRange("node_load1{fqdn=\""+hostname+"\",monitor=\"master\"}", v1.Range{
 			Start: time.Now().Add(-time.Hour),
 			End:   time.Now(),
 			Step:  time.Minute,
 		})
 		if err != nil || values.Len() != 1 {
-			s.recoveryHandlerStatus(http.StatusInternalServerError, c, errors.New("Prometheus query 'ifHCOutOctets' failed."))
+			log.Println(values)
+			s.recoveryHandlerStatus(http.StatusInternalServerError, c, errors.New("Prometheus query 'node_load1' for "+hostname+" failed."))
 			return
 		}
 
