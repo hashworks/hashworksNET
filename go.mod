@@ -2,6 +2,7 @@ module github.com/hashworks/hashworksNET
 
 require (
 	github.com/ekyoung/gin-nice-recovery v0.0.0-20160510022553-1654dca486db
+	github.com/gin-contrib/cache v1.1.0
 	github.com/gin-contrib/gzip v0.0.5
 	github.com/gin-contrib/multitemplate v0.0.0-20220321030454-c3962357f8fe
 	github.com/gin-gonic/gin v1.7.7
@@ -13,7 +14,6 @@ require (
 	github.com/unrolled/secure v1.10.0
 	github.com/urfave/cli v1.22.5
 	github.com/wcharczuk/go-chart v2.0.1+incompatible
-	github.com/gin-contrib/cache v1.1.0
 )
 
 require (
