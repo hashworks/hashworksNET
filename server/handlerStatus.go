@@ -142,20 +142,25 @@ func (s *Server) queryNode(shortHostname string, fqdn string, plexDomain string,
 	}
 
 	var services []Service
+	var probeNames []string
+	var probeSuccess []model.Vector
+	var probeDurations []model.Vector
 
-	probeSuccessPlex, err := s.queryPrometheus("probe_success{instance=\""+plexDomain+":32400\",monitor=\"master\"}", time.Now())
-	if err != nil || probeSuccessPlex.Len() != 1 {
-		return Node{}, errors.New("Prometheus query 'probe_success' for plex on " + shortHostname + " failed.")
+	if plexDomain != "" {
+		probeSuccessPlex, err := s.queryPrometheus("probe_success{instance=\""+plexDomain+":32400\",monitor=\"master\"}", time.Now())
+		if err != nil || probeSuccessPlex.Len() != 1 {
+			return Node{}, errors.New("Prometheus query 'probe_success' for plex on " + shortHostname + " failed.")
+		}
+
+		probeDurationPlex, err := s.queryPrometheus("probe_duration_seconds{instance=\""+plexDomain+":32400\",monitor=\"master\"}", time.Now())
+		if err != nil || probeDurationPlex.Len() != 1 {
+			return Node{}, errors.New("Prometheus query 'probe_duration_seconds' for plex on " + shortHostname + " failed.")
+		}
+
+		probeNames = append(probeNames, "Plex")
+		probeSuccess = append(probeSuccess, probeSuccessPlex)
+		probeDurations = append(probeDurations, probeDurationPlex)
 	}
-
-	probeDurationPlex, err := s.queryPrometheus("probe_duration_seconds{instance=\""+plexDomain+":32400\",monitor=\"master\"}", time.Now())
-	if err != nil || probeDurationPlex.Len() != 1 {
-		return Node{}, errors.New("Prometheus query 'probe_duration_seconds' for plex on " + shortHostname + " failed.")
-	}
-
-	probeNames := []string{"Plex"}
-	probeSuccess := []model.Vector{probeSuccessPlex}
-	probeDurations := []model.Vector{probeDurationPlex}
 
 	if dotDomain != "" {
 		probeSuccessDoT, err := s.queryPrometheus("probe_success{instance=\""+dotDomain+":853\",monitor=\"master\"}", time.Now())
@@ -232,7 +237,7 @@ func (s *Server) handlerStatus(c *gin.Context) {
 		return
 	}
 
-	nodeHelios, err := s.queryNode("helios", "helios.kromlinger.eu", "plex.helios.hashworks.net", "dns.kromlinger.eu", false)
+	nodeHelios, err := s.queryNode("helios", "helios.kromlinger.eu", "", "dns.kromlinger.eu", false)
 	if err != nil {
 		s.recoveryHandlerStatus(http.StatusInternalServerError, c, err)
 		return
